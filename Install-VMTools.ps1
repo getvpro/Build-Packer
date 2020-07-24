@@ -63,7 +63,7 @@ Start-Process "setup64.exe" -ArgumentList '/s /v "/qb REBOOT=R"' -Wait
 $Running = $false
 $iRepeat = 0
 
-while (-not($Running -and $iRepeat -lt 5)) {
+while (-not$Running -and $iRepeat -lt 5) {
 
   write-host "Pause for 2 seconds to check running state on VMware tools service" -ForegroundColor cyan 
   Start-Sleep -s 2
@@ -85,7 +85,7 @@ while (-not($Running -and $iRepeat -lt 5)) {
 }
 
 ### 4 - If the service never enters the 'Running' state, re-install VMWare Tools
-if (-not($Running)) {
+if (-not$Running) {
 
   #Uninstall VMWare Tools
   write-host "Running un-install on first attempt of VMware tools install" -ForegroundColor cyan
@@ -115,7 +115,7 @@ if (-not($Running)) {
 Write-host "Re-check again if VMTools service has been installed and is started" -ForegroundColor Cyan
   
 $iRepeat = 0
-while (-not($Running -and $iRepeat -lt 5)) {
+while (-not$Running -and $iRepeat -lt 5) {
 
     Start-Sleep -s 2
     $Service = Get-Service "VMTools" -ErrorAction SilentlyContinue
@@ -138,7 +138,7 @@ while (-not($Running -and $iRepeat -lt 5)) {
 
   ### 7 If after the reinstall, the service is still not running, this is a failed deployment
 
-  IF (-not($Running)) {
+  IF (-not$Running) {
     
     Write-Host -ForegroundColor Red "VMWare Tools are still not installed correctly. This is a failed deployment."
     Pause
