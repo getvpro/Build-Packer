@@ -9,6 +9,9 @@ Change log
 July 23, 2020
 -Initial version
 
+July 25, 2020
+-Removed WinRM enablement
+
 .DESCRIPTION
 Author oreynolds@gmail.com
 
@@ -18,7 +21,7 @@ Author oreynolds@gmail.com
 .NOTES
 
 .Link
-TBD
+https://github.com/getvpro/Build-Packer
 
 #>
 
@@ -52,29 +55,6 @@ New-Item -ItemType Directory -Force -Path $TempFolder
 [Environment]::SetEnvironmentVariable("TEMP", $TempFolder, [EnvironmentVariableTarget]::User)
 [Environment]::SetEnvironmentVariable("TMP", $TempFolder, [EnvironmentVariableTarget]::User)
 
-### Enable WinRM
+write-host "Script completed! Moving to next step after 5 second pause" -ForegroundColor Cyan
+start-sleep -s 5
 
-write-host "Enable WinRM for integration with packer" -ForegroundColor Cyan
-
-$NetworkListManager = [Activator]::CreateInstance([Type]::GetTypeFromCLSID([Guid]"{DCB00C01-570F-4A9B-8D69-199FDBA5723B}"))
-$Connections = $NetworkListManager.GetNetworkConnections()
-$Connections | ForEach-Object { $_.GetNetwork().SetCategory(1) }
-
-Enable-PSRemoting -Force
-winrm quickconfig -q
-winrm quickconfig -transport:http
-winrm set winrm/config '@{MaxTimeoutms="1800000"}'
-winrm set winrm/config/winrs '@{MaxMemoryPerShellMB="800"}'
-winrm set winrm/config/service '@{AllowUnencrypted="true"}'
-winrm set winrm/config/service/auth '@{Basic="true"}'
-winrm set winrm/config/client/auth '@{Basic="true"}'
-winrm set winrm/config/listener?Address=*+Transport=HTTP '@{Port="5985"}'
-netsh advfirewall firewall set rule group="Windows Remote Administration" new enable=yes
-netsh advfirewall firewall set rule name="Windows Remote Management (HTTP-In)" new enable=yes action=allow
-Set-Service winrm -startuptype "auto"
-Restart-Service winrm
-
-write-host "Script compelted, moving to next step after 5 second pause" -ForegroundColor Cyan
-start-sleep -Seconds 5
-
-EXIT

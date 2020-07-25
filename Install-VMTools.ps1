@@ -3,22 +3,20 @@
 This is a VMWare tools install script that re-attempts the install if it finds that the VMWARE tools service has failed to install on the first attempt 1
 
 .SYNOPSIS
-I call this script as part of automating windows 10/2019 builds via autounattend.xml with packer.io based builds
-the Packer instance requires the VMWare tools service to be running at the end of the build, else, it will fail
-There's a long-standing issue with the VMware tools service failing to install on windows builds, the code in this script gets around it, by trigerring a re-install when the service fails to install on the first attempt
-The below code is based on the following blog post: https://scriptech.io/automatically-reinstalling-vmware-tools-on-server2016-after-the-first-attempt-fails-to-install-the-vmtools-service/
-I wasn't able to contact the author to get his permission (Hi Tim!) I hope he's ok with me using it :-)
-The code I made from Tim's script were to add write-host to show status, the use of the "Get-VMToolsInstalled" function which is used to automate the un-install process
+- This script can be used as part of automating windows 10/2019 builds via autounattend.xml with packer.io based builds
+- The Packer instance requires the VMWare tools service to be running at the end of the build, else, it will fail
+- Due to an issue Windows "VMware tools service" failing to install on the first attempt, the code in this script compltes a re-install of the VMWARE tools package
+- The below code is mostly based on the script within the following blog post: 
+- https://scriptech.io/automatically-reinstalling-vmware-tools-on-server2016-after-the-first-attempt-fails-to-install-the-vmtools-service/
 
 .NOTES
 Change log
 
-July 23, 2020
--Initial version
+July 24, 2020
+- Initial version
 
 .DESCRIPTION
-Author oreynolds@gmail.com
-99% of the code in this script comes from the following script from Tim's script posted here:
+Author oreynolds@gmail.com and Tim from the scriptech.io blog
 https://scriptech.io/automatically-reinstalling-vmware-tools-on-server2016-after-the-first-attempt-fails-to-install-the-vmtools-service/
 
 .EXAMPLE
@@ -28,7 +26,7 @@ https://scriptech.io/automatically-reinstalling-vmware-tools-on-server2016-after
 
 .Link
 https://scriptech.io/automatically-reinstalling-vmware-tools-on-server2016-after-the-first-attempt-fails-to-install-the-vmtools-service/
-and TBD GIT HUB
+https://github.com/getvpro/Build-Packer
 
 #>
 
