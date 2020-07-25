@@ -8,6 +8,7 @@ Change log
 
 July 25, 2020
 -Initial version
+-Minor edit to remove code that was generating "access denied" errors on for loop at start
 
 .DESCRIPTION
 Author oreynolds@gmail.com
@@ -25,10 +26,6 @@ https://github.com/getvpro/Build-Packer
 ### Enable WinRM
 
 write-host "Enable WinRM for integration with packer" -ForegroundColor Cyan
-
-$NetworkListManager = [Activator]::CreateInstance([Type]::GetTypeFromCLSID([Guid]"{DCB00C01-570F-4A9B-8D69-199FDBA5723B}"))
-$Connections = $NetworkListManager.GetNetworkConnections()
-$Connections | ForEach-Object { $_.GetNetwork().SetCategory(1) }
 
 Enable-PSRemoting -Force
 winrm quickconfig -q
