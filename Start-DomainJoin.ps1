@@ -30,11 +30,13 @@ https://github.com/getvpro/Build-Packer
 
 Add-Type -AssemblyName System.Windows.Forms
 
+$OS = (Get-WMIObject -class win32_operatingsystem).Caption
+
 $text = "The $OS build has now completed.`
 `
 Do you want to join the computer to the domain ?"
 
-$OS = (Get-WMIObject -class win32_operatingsystem).Caption
+
 
 IF (-not(Test-path c:\Scripts)) {
 
@@ -51,9 +53,10 @@ IF (-not(Test-path "C:\Scripts\Start-DomainJoin.ps1" -ErrorAction SilentlyContin
     $WshShell = New-Object -ComObject WScript.Shell
     $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\Join Active Directory.lnk")
     $Shortcut.TargetPath = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"    
-    $Shortcut.Arguments = '-NoProfile -NoLogo -NonInteractive -ExecutionPolicy Bypass -File "C:\Scripts\Start-DomainJoin.ps1"'
+    $Shortcut.Arguments = '-NoProfile -ExecutionPolicy Bypass -File "C:\Scripts\Start-DomainJoin.ps1"'
     $Shortcut.IconLocation = ",0"
-    $Shortcut.WindowStyle = 7 #Minimized
+    #$Shortcut.WindowStyle = 7 #Minimized
+    $Shortcut.WindowStyle = 1 #Minimized
     $Shortcut.WorkingDirectory = "C:\Scripts"
     $Shortcut.Description ="Join Active Directory"
     $Shortcut.Save()
