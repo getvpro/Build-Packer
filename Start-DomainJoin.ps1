@@ -13,7 +13,7 @@ July 25, 2020
  -Initial version
 
 July 26, 2020
- -Various edits to cover script copy/LNK creation before code that actually prompts for domain join
+ - Various edits to cover script copy/LNK creation before code that actually prompts for domain join
 
 .DESCRIPTION
 Author oreynolds@gmail.com
@@ -36,8 +36,6 @@ $text = "The $OS build has now completed.`
 `
 Do you want to join the computer to the domain ?"
 
-
-
 IF (-not(Test-path c:\Scripts)) {
 
     New-Item -ItemType Directory "C:\Scripts" 
@@ -54,9 +52,8 @@ IF (-not(Test-path "C:\Scripts\Start-DomainJoin.ps1" -ErrorAction SilentlyContin
     $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\Join Active Directory.lnk")
     $Shortcut.TargetPath = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"    
     $Shortcut.Arguments = '-NoProfile -ExecutionPolicy Bypass -File "C:\Scripts\Start-DomainJoin.ps1"'
-    $Shortcut.IconLocation = ",0"
-    #$Shortcut.WindowStyle = 7 #Minimized
-    $Shortcut.WindowStyle = 1 #Minimized
+    $Shortcut.IconLocation = ",0"    
+    $Shortcut.WindowStyle = 1 #normal window
     $Shortcut.WorkingDirectory = "C:\Scripts"
     $Shortcut.Description ="Join Active Directory"
     $Shortcut.Save()
