@@ -12,7 +12,7 @@
       "disk_controller_type": "lsilogic-sas",
       "firmware": "bios",
       "floppy_files": [
-        "autounattend.xml",
+        "config/Autounattend/Server_2019/autounattend.xml",
         "scripts/Start-FirstSteps.ps1",
         "scripts/Install-VMTools.ps1",
         "scripts/Start-DomainJoin.ps1",
