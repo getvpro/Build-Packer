@@ -12,6 +12,9 @@ July 23, 2020
 July 25, 2020
 -Removed WinRM enablement
 
+July 27, 2020
+-Amended to support Win 10
+
 .DESCRIPTION
 Author oreynolds@gmail.com
 
@@ -27,17 +30,14 @@ https://github.com/getvpro/Build-Packer
 
 write-host "Running first steps after GUI logon" -ForegroundColor Cyan
 
-IF (Get-process "servermanager") {
+IF (Get-process "servermanager" -ErrorAction SilentlyContinue) {
 
     Stop-Process -name servermanager -Force
-
+    New-ItemProperty -Path HKCU:\Software\Microsoft\ServerManager -Name DoNotOpenServerManagerAtLogon -PropertyType DWORD -Value "0x1" –Force
 }
 
-New-ItemProperty -Path HKCU:\Software\Microsoft\ServerManager -Name DoNotOpenServerManagerAtLogon -PropertyType DWORD -Value "0x1" –Force
-
-write-host "Disable network discovery and open RDP" -ForegroundColor Cyan
-
 ### Disable network discovery
+write-host "Disable network discovery and open RDP" -ForegroundColor Cyan
 reg ADD HKLM\SYSTEM\CurrentControlSet\Control\Network\NewNetworkWindowOff /f
 netsh advfirewall firewall set rule group="Network Discovery" new enable=No
 

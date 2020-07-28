@@ -8,13 +8,16 @@ Change log
 
 July 25, 2020
 -Initial version
--Minor edit to remove code that was generating "access denied" errors on for loop at start
+-Minor edit to first part which produced "access denied"
+
+July 27, 2020
+-Amended to support Win 10
 
 .DESCRIPTION
 Author oreynolds@gmail.com
 
 .EXAMPLE
-./Start-FirstSteps.ps1
+./Enable-WinRM.ps1
 
 .NOTES
 
@@ -26,6 +29,9 @@ https://github.com/getvpro/Build-Packer
 ### Enable WinRM
 
 write-host "Enable WinRM for integration with packer" -ForegroundColor Cyan
+
+write-host "Set network connection profile to private" -ForegroundColor Cyan
+Set-NetConnectionProfile -InterfaceAlias Ethernet -NetworkCategory Private
 
 Enable-PSRemoting -Force
 winrm quickconfig -q
