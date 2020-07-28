@@ -13,9 +13,9 @@
       "firmware": "bios",
       "floppy_files": [
         "autounattend.xml",
-        "scripts/Start-FirstSteps.ps1"
+        "scripts/Start-FirstSteps.ps1",
         "scripts/Install-VMTools.ps1",
-        "scripts/Start-DomainJoin.ps1"
+        "scripts/Start-DomainJoin.ps1",
         "scripts/Enable-WinRM.ps1"
       ],
       "folder": "{{user `vsphere-folder`}}",
