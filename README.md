@@ -1,6 +1,10 @@
 These scripts and config files can be used to build Win 10 / Win 2019 based virtual assets on vSphere / vmware based assets
 On a windows based asset, you would take the following steps to provision a Win 10 / Win 2019 asset via packer in a vpshere environment
 
+Complete step by step instructions are avaialble on my blog post: here: 
+
+https://getvpro.wordpress.com/2020/07/29/10-min-windows-10-server-2019-build-automation-via-osdbuilder-autounattend-xml-and-packer-io/
+
 1. Download the latest version of the packer.io exe for windows from the following link: https://www.packer.io/downloads
 2. Refer to install instructions from packer.io
 3. With step 2 completed, create a sub-directory to where you extracted the packer.exe called scripts
