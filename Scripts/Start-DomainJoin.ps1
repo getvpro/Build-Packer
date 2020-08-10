@@ -15,6 +15,12 @@ July 25, 2020
 July 26, 2020
  -Various edits to cover script copy/LNK creation before code that actually prompts for domain join
 
+Aug 6, 2020
+ -Updated to pull domain name from $Cred
+
+Aug 7, 2020
+ -Added IF statement to cover $Cred entered in user@domain format or domain\username
+
 .DESCRIPTION
 Author oreynolds@gmail.com
 
@@ -37,7 +43,6 @@ $text = "The $OS build has now completed.`
 Do you want to join the computer to the domain ?"
 
 
-
 IF (-not(Test-path c:\Scripts)) {
 
     New-Item -ItemType Directory "C:\Scripts" 
@@ -54,8 +59,7 @@ IF (-not(Test-path "C:\Scripts\Start-DomainJoin.ps1" -ErrorAction SilentlyContin
     $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\Join Active Directory.lnk")
     $Shortcut.TargetPath = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"    
     $Shortcut.Arguments = '-NoProfile -ExecutionPolicy Bypass -File "C:\Scripts\Start-DomainJoin.ps1"'
-    $Shortcut.IconLocation = ",0"
-    #$Shortcut.WindowStyle = 7 #Minimized
+    $Shortcut.IconLocation = ",0"    
     $Shortcut.WindowStyle = 1 #Minimized
     $Shortcut.WorkingDirectory = "C:\Scripts"
     $Shortcut.Description ="Join Active Directory"
@@ -76,7 +80,21 @@ IF (test-path C:\Scripts\Start-DomainJoin.ps1) {
     If ($UserResponse -eq "Yes") {
 
         write-host "You will prompted for valid domain credentials to join the computer to the domain" -ForegroundColor Cyan
-        Add-Computer
+
+        $Cred = Get-Credential
+
+        IF ($cred.username -like "*@*") {
+        
+            $DomainToJoin = $Cred.UserName.Split("@")[1]
+        
+        }
+
+        Else {
+
+            $DomainToJoin = $Cred.UserName.Split("\")[0]
+        }
+        
+        Add-Computer -Credential $Cred -DomainName $DomainToJoin
         remove-item "$Home\Desktop\Join Active Directory.lnk" -Force
     }
 
