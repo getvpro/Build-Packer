@@ -21,6 +21,9 @@ Aug 6, 2020
 Aug 7, 2020
  -Added IF statement to cover $Cred entered in user@domain format or domain\username
 
+Aug 15, 2020
+ -Added exit statement when not started as elevated
+
 .DESCRIPTION
 Author oreynolds@gmail.com
 
@@ -41,6 +44,11 @@ $OS = (Get-WMIObject -class win32_operatingsystem).Caption
 $text = "The $OS build has now completed.`
 `
 Do you want to join the computer to the domain ?"
+
+If (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    write-warning "Powershell was not started as an elevated session, script will now exit!" 
+    Exit
+}
 
 
 IF (-not(Test-path c:\Scripts)) {
