@@ -10,7 +10,8 @@
       "datacenter": "{{user `vsphere-datacenter`}}",
       "datastore": "{{user `vsphere-datastore`}}",
       "disk_controller_type": "lsilogic-sas",
-      "firmware": "EFI",
+      "firmware": "bios",
+      
       "floppy_files": [
         "config/Autounattend/Win10/autounattend.xml",
         "scripts/Start-FirstSteps.ps1",
