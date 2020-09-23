@@ -24,6 +24,9 @@ Aug 7, 2020
 Aug 15, 2020
  -Added exit statement when not started as elevated
 
+Sept 23, 2020
+-Janky code to create .lnk with "run as admin"
+
 .DESCRIPTION
 Author oreynolds@gmail.com
 
@@ -50,7 +53,6 @@ If (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
     Exit
 }
 
-
 IF (-not(Test-path c:\Scripts)) {
 
     New-Item -ItemType Directory "C:\Scripts" 
@@ -73,6 +75,10 @@ IF (-not(Test-path "C:\Scripts\Start-DomainJoin.ps1" -ErrorAction SilentlyContin
     $Shortcut.Description ="Join Active Directory"
     $Shortcut.Save()
 
+    $bytes = [System.IO.File]::ReadAllBytes("$Home\Desktop\Join Active Directory.lnk")
+    $bytes[0x15] = $bytes[0x15] -bor 0x20 #set byte 21 (0x15) bit 6 (0x20) ON
+    [System.IO.File]::WriteAllBytes("$Home\Desktop\Join Active Directory.lnk", $bytes)    
+    
     write-host "`r`n"
     write-host "$Home\Desktop\Start-DomainJoin.ps1 created" -ForegroundColor Cyan
     write-host "`r`n"
