@@ -1,0 +1,77 @@
+{
+  "builders": [
+    {
+      "CPUs": "{{user `vm-cpu-num`}}",
+      "RAM": "{{user `vm-mem-size`}}",
+      "RAM_reserve_all": true,
+      "cluster": "{{user `vsphere-cluster`}}",
+      "communicator": "winrm",
+      "convert_to_template": "false",
+      "datacenter": "{{user `vsphere-datacenter`}}",
+      "datastore": "{{user `vsphere-datastore`}}",
+      "disk_controller_type": "lsilogic-sas",
+      "firmware": "efi",
+      "floppy_files": [
+        "config/Autounattend/Win10/EFI/autounattend.xml",
+        "scripts/Start-FirstSteps.ps1",
+        "scripts/Install-VMTools.ps1",
+        "scripts/Start-DomainJoin.ps1",
+        "scripts/Enable-WinRM.ps1"
+      ],
+      "folder": "{{user `vsphere-folder`}}",
+      "guest_os_type": "windows9_64Guest",
+      "insecure_connection": "true",
+      "iso_paths": [
+        "{{user `os_iso_path`}}",
+        "CHANGE ME"
+      ],
+      "network_adapters": [
+        {
+          "network": "{{user `vsphere-network`}}",
+          "network_card": "vmxnet3"
+        }
+      ],
+      "password": "{{user `vsphere-password`}}",
+      "storage": [
+        {
+          "disk_size": "{{user `vm-disk-size`}}",
+          "disk_thin_provisioned": true
+        }
+      ],
+      "type": "vsphere-iso",
+      "username": "{{user `vsphere-user`}}",
+      "vcenter_server": "{{user `vsphere-server`}}",
+      "vm_name": "{{user `vm-name`}}",
+      "winrm_password": "{{user `winadmin-password`}}",
+      "winrm_username": "CHANGE ME"
+    }
+  ],
+  "provisioners": [
+    {
+      "inline": [
+        "ipconfig"
+      ],
+      "type": "windows-shell"
+    }
+  ],
+  "sensitive-variables": [
+    "vsphere_password",
+    "winadmin_password"
+  ],
+  "variables": {
+    "os_iso_path": "CHANGE ME",
+    "vm-cpu-num": "2",
+    "vm-disk-size": "40960",
+    "vm-mem-size": "4096",
+    "vm-name": "CHANGE ME",
+    "vsphere-cluster":"CHANGE ME",
+    "vsphere-datacenter": "CHANGE ME",
+    "vsphere-datastore": "CHANGE ME",
+    "vsphere-folder": "CHANGE ME",
+    "vsphere-network": "CHANGE ME",
+    "vsphere-user": "CHANGE ME",
+    "vsphere-password": "CHANGE ME",
+    "vsphere-server": "CHANGE ME",
+    "winadmin-password": "CHANGE ME"
+  }
+}

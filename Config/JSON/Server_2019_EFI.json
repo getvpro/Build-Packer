@@ -10,9 +10,9 @@
       "datacenter": "{{user `vsphere-datacenter`}}",
       "datastore": "{{user `vsphere-datastore`}}",
       "disk_controller_type": "lsilogic-sas",
-      "firmware": "bios",
+      "firmware": "efi",
       "floppy_files": [
-        "config/Autounattend/Server_2019/autounattend.xml",
+        "config/Autounattend/Win2019/EFI/autounattend.xml",
         "scripts/Start-FirstSteps.ps1",
         "scripts/Install-VMTools.ps1",
         "scripts/Start-DomainJoin.ps1",
@@ -23,7 +23,7 @@
       "insecure_connection": "true",
       "iso_paths": [
         "{{user `os_iso_path`}}",
-        "[DATASTORE NAME] SUB-FOLDER/vmwaretools.iso"
+        "CHANGE ME"
       ],
       "network_adapters": [
         {
@@ -43,7 +43,7 @@
       "vcenter_server": "{{user `vsphere-server`}}",
       "vm_name": "{{user `vm-name`}}",
       "winrm_password": "{{user `winadmin-password`}}",
-      "winrm_username": "administrator"
+      "winrm_username": "CHANGE ME"
     }
   ],
   "provisioners": [
@@ -59,20 +59,19 @@
     "winadmin_password"
   ],
   "variables": {
-    "os_iso_path": "[DATASTORE NAME] SUB-FOLDER/server_2019.iso"
-,
+    "os_iso_path": "CHANGE ME",
     "vm-cpu-num": "2",
     "vm-disk-size": "40960",
     "vm-mem-size": "4096",
-    "vm-name": "WIN2019-Packer",
-    "vsphere-cluster": "Your cluster name here",
-    "vsphere-datacenter": "Your Datacenter Name Here",
-    "vsphere-datastore": "Your Datastore name here",
-    "vsphere-folder": "Your vsphere VM folder name here",
-    "vsphere-network": "VM Network",
-    "vsphere-password": "Your vpshere password here",
-    "vsphere-server": "yourvserver.domain.name",
-    "vsphere-user": "youradmin@domain.name",
-    "winadmin-password": "Your password here"
+    "vm-name": "Win2019-packer",
+    "vsphere-cluster": "vSan",
+    "vsphere-datacenter": "CHANGE ME",
+    "vsphere-datastore": "vSan 3TB",
+    "vsphere-folder": "vSan 3TB",
+    "vsphere-network": "vSan 3TB",
+    "vsphere-user": "vSan 3TB",
+    "vsphere-password": "vSan 3TB",
+    "vsphere-server": "vSan 3TB",
+    "winadmin-password": "vSan 3TB"
   }
 }

@@ -11,20 +11,19 @@
       "datastore": "{{user `vsphere-datastore`}}",
       "disk_controller_type": "lsilogic-sas",
       "firmware": "bios",
-      
       "floppy_files": [
-        "config/Autounattend/Win10/autounattend.xml",
+        "config/Autounattend/Win2019/BIOS/autounattend.xml",
         "scripts/Start-FirstSteps.ps1",
         "scripts/Install-VMTools.ps1",
         "scripts/Start-DomainJoin.ps1",
         "scripts/Enable-WinRM.ps1"
       ],
       "folder": "{{user `vsphere-folder`}}",
-      "guest_os_type": "windows9_64Guest",
+      "guest_os_type": "windows9Server64Guest",
       "insecure_connection": "true",
       "iso_paths": [
         "{{user `os_iso_path`}}",
-        "CHANGE ME] CHANGE ME/vmwaretools.iso"
+        "CHANGE ME"
       ],
       "network_adapters": [
         {
@@ -44,7 +43,7 @@
       "vcenter_server": "{{user `vsphere-server`}}",
       "vm_name": "{{user `vm-name`}}",
       "winrm_password": "{{user `winadmin-password`}}",
-      "winrm_username": "Administrator"
+      "winrm_username": "CHANGE ME"
     }
   ],
   "provisioners": [
@@ -60,19 +59,19 @@
     "winadmin_password"
   ],
   "variables": {
-    "os_iso_path": "[CHANGE ME] CHANGE ME/WIN10_2004.ISO",
+    "os_iso_path": "CHANGE ME",
     "vm-cpu-num": "2",
     "vm-disk-size": "40960",
     "vm-mem-size": "4096",
-    "vm-name": "WIN10-Packer",
-    "vsphere-cluster": "CHANGE ME",
-    "vsphere-datacenter": "CHANGE ME,
+    "vm-name": "Win2019-packer",
+    "vsphere-cluster": "vSan",
+    "vsphere-datacenter": "CHANGE ME",
     "vsphere-datastore": "CHANGE ME",
     "vsphere-folder": "CHANGE ME",
-    "vsphere-network": "VM Network",
+    "vsphere-network": "CHANGE ME",
+    "vsphere-user": "CHANGE ME",
     "vsphere-password": "CHANGE ME",
     "vsphere-server": "CHANGE ME",
-    "vsphere-user": "administrator@CHANGE ME",
     "winadmin-password": "CHANGE ME"
   }
 }

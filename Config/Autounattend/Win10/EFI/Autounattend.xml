@@ -1,11 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<!-- Owen Reynolds / oreynolds@gmail.com -->
-<!-- Last edited on July 27, 2020 -->
+<!-- Owen Reynolds, ProContact IT, July 22, 2020 -->
+<!-- Last edited on July 30, 2020 -->
 <!-- Windows 10 enterprise trial -->
 <!-- Reference #1 https://raw.githubusercontent.com/guillermo-musumeci/packer-vsphere-iso-windows/master/win2019.base/autounattend.xml -->
 <!-- Reference #2 https://raw.githubusercontent.com/ruzickap/packer-templates/master/http/windows-2019/Autounattend.xml -->
 <!-- Reference #3 http://supportishere.com/2-unattend-xml-settings-i-specify-in-all-of-my-windows-10-installations/ -->
 <!-- Reference #4 https://techcommunity.microsoft.com/t5/windows-blog-archive/windows-10-mdt-2013-update-1-and-hideshell/ba-p/706592 -->
+<!-- BIOS machine type -->
 <unattend xmlns="urn:schemas-microsoft-com:unattend">
     <settings pass="windowsPE">
         <component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -19,38 +20,44 @@
         </component>
         <component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
             <DiskConfiguration>
-                <Disk wcm:action="add">
-                    <CreatePartitions>
-                        <CreatePartition wcm:action="add">
-                            <Order>1</Order>
-                            <Size>50</Size>
-                            <Type>Primary</Type>
-                        </CreatePartition>
-                        <CreatePartition wcm:action="add">
-                            <Order>2</Order>
-                            <Extend>true</Extend>
-                            <Type>Primary</Type>
-                        </CreatePartition>
-                    </CreatePartitions>
-                    <ModifyPartitions>
-                        <ModifyPartition wcm:action="add">
-                            <Order>1</Order>
-                            <PartitionID>1</PartitionID>
-                            <Format>NTFS</Format>
-                            <Label>Boot</Label>
-                            <Active>true</Active>
-                        </ModifyPartition>
-                        <ModifyPartition wcm:action="add">
-                            <Order>2</Order>
-                            <PartitionID>2</PartitionID>
-                            <Format>NTFS</Format>
-                            <Label>System</Label>
-                        </ModifyPartition>
-                    </ModifyPartitions>
-                    <DiskID>0</DiskID>
-                    <WillWipeDisk>true</WillWipeDisk>
-                </Disk>
-            </DiskConfiguration>
+				<Disk wcm:action="add">
+					<DiskID>0</DiskID>
+					<WillWipeDisk>true</WillWipeDisk>
+					<CreatePartitions>
+						<CreatePartition wcm:action="add">
+							<Order>1</Order>
+							<Type>EFI</Type>
+							<Size>100</Size>
+						</CreatePartition>
+						<CreatePartition wcm:action="add">
+							<Order>2</Order>
+							<Type>MSR</Type>
+							<Size>4096</Size>
+						</CreatePartition>
+						<CreatePartition wcm:action="add">
+							<Order>3</Order>
+							<Type>Primary</Type>
+							<Extend>true</Extend>
+						</CreatePartition>
+					</CreatePartitions>
+					<ModifyPartitions>
+						<ModifyPartition wcm:action="add">
+							<Order>1</Order>
+							<PartitionID>1</PartitionID>
+							<Label>System</Label>
+							<Format>FAT32</Format>
+						</ModifyPartition>
+						<ModifyPartition wcm:action="add">
+							<Order>2</Order>
+							<PartitionID>3</PartitionID>
+							<Label>Windows</Label>
+							<Letter>C</Letter>
+							<Format>NTFS</Format>
+						</ModifyPartition>
+					</ModifyPartitions>
+				</Disk>
+				<WillShowUI>OnError</WillShowUI>
+			</DiskConfiguration>
             <ImageInstall>
                 <OSImage>
                     <InstallFrom>
@@ -61,7 +68,7 @@
                     </InstallFrom>
                     <InstallTo>
                         <DiskID>0</DiskID>
-                        <PartitionID>2</PartitionID>
+                        <PartitionID>3</PartitionID>
                     </InstallTo>
                     <WillShowUI>OnError</WillShowUI>
                     <InstallToAvailablePartition>false</InstallToAvailablePartition>
@@ -76,14 +83,14 @@
                 </ProductKey>
                 <AcceptEula>true</AcceptEula>
                 <FullName>Win 10 Packer install</FullName>
-                <Organization>YourOrg</Organization>
+                <Organization>CHANGE ME</Organization>
             </UserData>
         </component>
     </settings>
     <settings pass="specialize">
         <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
             <TimeZone>Eastern Standard Time</TimeZone>
-            <ComputerName>Win10-packer</ComputerName>
+            <ComputerName>Win10-Packer</ComputerName>
         </component>        
      <component name="Microsoft-Windows-TerminalServices-LocalSessionManager" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
             <fDenyTSConnections>false</fDenyTSConnections>
@@ -145,7 +152,7 @@
                     <Order>4</Order>
                     <Path>reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System /v DelayedDesktopSwitchTimeout /d 0 /t REG_DWORD /f</Path>
                 </RunSynchronousCommand>
-            </RunSynchronous>        
+            </RunSynchronous>            
         </component>
       <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
             <OOBE>
@@ -161,18 +168,20 @@
             </OOBE>
             <AutoLogon>
                 <Password>
-                    <Value>20SuperSecure3d20</Value>
+                    <Value>CHANGE ME</Value>
                     <PlainText>true</PlainText>
                 </Password>
                 <LogonCount>2</LogonCount>
-                <Username>Administrator</Username>
+                <Username>administrator</Username>
                 <Enabled>true</Enabled>
             </AutoLogon>          
             <UserAccounts>
                 <AdministratorPassword>
-                    <Value>20SuperSecure3d20</Value>
+                    <Value>CHANGE ME</Value>
                     <PlainText>true</PlainText>
-                </AdministratorPassword>		       
+                </AdministratorPassword>
+		       <LocalAccounts>                    
+                </LocalAccounts>
             </UserAccounts>            
       <FirstLogonCommands>                
                 <SynchronousCommand wcm:action="add">
