@@ -23,6 +23,9 @@ July 12, 2021
 Nov 26, 2021
 -Updated to include ServiceUI calls for use with packer builds
 
+Nov 27, 2021
+-Amended reboot / sleep process
+
 .DESCRIPTION
 Author oreynolds@gmail.com
 
@@ -93,11 +96,20 @@ IF  ($Updates -ne $Null) {
     $WU4 `n
 
     "
+
+    Start-Sleep -Seconds 30
+
     Write-host "The following windows updates will be installed: `n $($Updates | Out-String)" -ForegroundColor Cyan
 
     Write-EventLog -LogName SYSTEM -Source $EventIDSrc -EventId 0 -EntryType INFO -Message "The following windows updates will be installed `n $($Updates | Out-String)"
     
-    Get-WUInstall -MicrosoftUpdate -AcceptAll -UpdateType Software -Install -AutoReboot    
+    Get-WUInstall -MicrosoftUpdate -AcceptAll -UpdateType Software -Install
+
+    #Get-WUInstall -MicrosoftUpdate -AcceptAll -UpdateType Software -Install -AutoReboot    
+
+    Close-InstallationProgress
+
+    Restart-Computer -Force
 }
 
 Else {
@@ -105,7 +117,8 @@ Else {
     Show-InstallationProgress -StatusMessage "No windows updates to install at this time"
     Write-host "No windows updates to install at this time" -foregroundcolor green
     Write-EventLog -LogName SYSTEM -Source $EventIDSrc -EventId 0 -EntryType INFO -Message "No windows updates to install at this time"
+    Start-Sleep -Seconds 5
+    Close-InstallationProgress
 
 }    
 
-Close-InstallationProgress
