@@ -25,6 +25,7 @@ Nov 26, 2021
 
 Nov 27, 2021
 -Amended reboot / sleep process
+-Ignore reboot added
 
 .DESCRIPTION
 Author oreynolds@gmail.com
@@ -103,7 +104,7 @@ IF  ($Updates -ne $Null) {
 
     Write-EventLog -LogName SYSTEM -Source $EventIDSrc -EventId 0 -EntryType INFO -Message "The following windows updates will be installed `n $($Updates | Out-String)"
     
-    Get-WUInstall -MicrosoftUpdate -AcceptAll -UpdateType Software -Install
+    Get-WUInstall -MicrosoftUpdate -AcceptAll -UpdateType Software -Install -IgnoreReboot
 
     #Get-WUInstall -MicrosoftUpdate -AcceptAll -UpdateType Software -Install -AutoReboot    
 
