@@ -26,6 +26,7 @@ Nov 26, 2021
 Nov 27, 2021
 -Amended reboot / sleep process
 -Ignore reboot added
+-Related scheduled task will be disabled when there are no more windows updates to process, should be on reboot #3
 
 .DESCRIPTION
 Author oreynolds@gmail.com
@@ -104,9 +105,7 @@ IF  ($Updates -ne $Null) {
 
     Write-EventLog -LogName SYSTEM -Source $EventIDSrc -EventId 0 -EntryType INFO -Message "The following windows updates will be installed `n $($Updates | Out-String)"
     
-    Get-WUInstall -MicrosoftUpdate -AcceptAll -UpdateType Software -Install -IgnoreReboot
-
-    #Get-WUInstall -MicrosoftUpdate -AcceptAll -UpdateType Software -Install -AutoReboot    
+    Get-WUInstall -MicrosoftUpdate -AcceptAll -UpdateType Software -Install -IgnoreReboot    
 
     Close-InstallationProgress
 
@@ -115,11 +114,12 @@ IF  ($Updates -ne $Null) {
 
 Else {
 
-    Show-InstallationProgress -StatusMessage "No windows updates to install at this time"
-    Write-host "No windows updates to install at this time" -foregroundcolor green
+    Show-InstallationProgress -StatusMessage "No windows updates to install at this time. the scheduled task will be disabled"
+    Write-host "No windows updates to install at this time, the scheduled task will be disabled" -foregroundcolor green
     Write-EventLog -LogName SYSTEM -Source $EventIDSrc -EventId 0 -EntryType INFO -Message "No windows updates to install at this time"
     Start-Sleep -Seconds 5
     Close-InstallationProgress
+    Disable-ScheduledTask -TaskName Get-WinUpdatesPacker -ErrorAction SilentlyContinue
 
 }    
 
