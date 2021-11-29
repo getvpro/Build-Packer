@@ -27,9 +27,11 @@ Nov 28 2021
 -Amended reboot / sleep process
 -Ignore reboot added
 -Related scheduled task will be disabled when there are no more windows updates to process, should be on reboot #3
-
-Nov 29
 -Custom logging function added
+
+Nov 29, 2021
+-PSADT show-installation process turned off, auto reboot added back
+-Amended install line to Get-WUInstall -MicrosoftUpdate -AcceptAll -Install -AutoReboot
 
 .DESCRIPTION
 Author oreynolds@gmail.com
@@ -134,6 +136,7 @@ $WU4 = $($Updates | Select-object -ExpandProperty Title | Out-String).Split("`n"
 
 IF  ($Updates -ne $Null) {
 
+    <#
     Show-InstallationProgress -TopMost $False -StatusMessage `
     "The following updates will be installed: `n
 
@@ -141,16 +144,20 @@ IF  ($Updates -ne $Null) {
     $WU2 `n
     $WU3 `n
     $WU4 `n
-
-    "    
+    "
+    #>
 
     Write-CustomLog -ScriptLog $ScriptLog -Message "The following windows updates will be installed: `n $($Updates | Out-String)" -Level INFO    
 
     Write-EventLog -LogName SYSTEM -Source $EventIDSrc -EventId 0 -EntryType INFO -Message "The following windows updates will be installed `n $($Updates | Out-String)"
     
-    Get-WUInstall -MicrosoftUpdate -AcceptAll -UpdateType Software -Install -IgnoreReboot    
+    Get-WUInstall -MicrosoftUpdate -AcceptAll -Install -AutoReboot
+    
+    #Get-WUInstall -MicrosoftUpdate -AcceptAll -UpdateType Software -Install -IgnoreReboot
+    
+    #Get-WUInstall -MicrosoftUpdate -AcceptAll -UpdateType Software -Install -AutoReboot    
 
-    Close-InstallationProgress
+    #Close-InstallationProgress
 
     Restart-Computer -Force
 }
