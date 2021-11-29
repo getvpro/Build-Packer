@@ -32,6 +32,7 @@ Nov 28 2021
 Nov 29, 2021
 -PSADT show-installation process turned off, auto reboot added back
 -Amended install line to Get-WUInstall -MicrosoftUpdate -AcceptAll -Install -AutoReboot
+-Log stamp update
 
 .DESCRIPTION
 Author oreynolds@gmail.com
@@ -48,7 +49,7 @@ N/A
 
 $EventIDSrc = "PSWindowsUpdate"
 $LogTimeStamp = (Get-Date).ToString('MM-dd-yyyy-hhmm-tt')
-$ScriptLog = "C:\Admin\Build\WinPackerBuild-$LogTimeStamp.log"
+$ScriptLog = (Get-ChildItem C:\Admin\Build | Sort-Object -Property LastWriteTime | Select -first 1).FullName
 
 ### Functions
 
