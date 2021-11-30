@@ -33,6 +33,11 @@ Nov 29, 2021
 -PSADT show-installation process turned off, auto reboot added back
 -Amended install line to Get-WUInstall -MicrosoftUpdate -AcceptAll -Install -AutoReboot
 -Log stamp update
+-Part of effort to resolve stuck updates occuring intermittently
+    1: PSWindowsUpdate is re-installed each time, 
+    2: PSADT is no longer loaded, only installed where not present
+    3: 'netsh winsock reset catalog' added to Enable-WinRM
+    4: Install line now Get-WUInstall -MicrosoftUpdate -AcceptAll -UpdateType Software -Install -AutoReboot -IgnoreUserInput
 
 .DESCRIPTION
 Author oreynolds@gmail.com
@@ -114,19 +119,20 @@ IF (!(Get-PackageProvider -ListAvailable nuget) ) {
 
 IF (!(Get-Module -ListAvailable -Name PSWindowsUpdate)) {
 
-    Install-module pswindowsupdate -force
+    Install-module pswindowsupdate -force -AllowClobber
     Write-CustomLog -ScriptLog $ScriptLog -Message "The PSWindowsUpdate module will be installed" -Level INFO
     Write-EventLog -LogName SYSTEM -Source $EventIDSrc -EventId 0 -EntryType INFO -Message "The PSWindowsUpdate module will be installed"
 }
 
 If (-not(Get-Module -ListAvailable -Name PSADT)) {
 
-    Install-Module -Name PSADT -AllowClobber -Force | Import-Module -Name PSADT -Force
+    Install-Module -Name PSADT -AllowClobber -Force
 
 }
 
-write-host "Importing PSWindowsUpdate" -ForegroundColor Cyan
-Import-Module -Name PSWindowsUpdate
+Write-CustomLog -ScriptLog $ScriptLog -Message "install / import PSWindowsUpdate module" -Level INFO
+
+Install-Module -Name pswindowsupdate -AllowClobber -Force | Import-Module -Name pswindowsupdate -Force
 
 $Updates  = Get-WUList
 $Updates = $Updates  | Select KB, Size, Title
@@ -150,13 +156,9 @@ IF  ($Updates -ne $Null) {
 
     Write-CustomLog -ScriptLog $ScriptLog -Message "The following windows updates will be installed: `n $($Updates | Out-String)" -Level INFO    
 
-    Write-EventLog -LogName SYSTEM -Source $EventIDSrc -EventId 0 -EntryType INFO -Message "The following windows updates will be installed `n $($Updates | Out-String)"
+    Write-EventLog -LogName SYSTEM -Source $EventIDSrc -EventId 0 -EntryType INFO -Message "The following windows updates will be installed `n $($Updates | Out-String)"    
     
-    Get-WUInstall -MicrosoftUpdate -AcceptAll -Install -AutoReboot
-    
-    #Get-WUInstall -MicrosoftUpdate -AcceptAll -UpdateType Software -Install -IgnoreReboot
-    
-    #Get-WUInstall -MicrosoftUpdate -AcceptAll -UpdateType Software -Install -AutoReboot    
+    Get-WUInstall -MicrosoftUpdate -AcceptAll -UpdateType Software -Install -AutoReboot -IgnoreUserInput
 
     #Close-InstallationProgress
 
@@ -165,11 +167,11 @@ IF  ($Updates -ne $Null) {
 
 Else {
 
-    Show-InstallationProgress -StatusMessage "No windows updates to install at this time. the scheduled task will be disabled"
+    #Show-InstallationProgress -StatusMessage "No windows updates to install at this time. the scheduled task will be disabled"
     Write-CustomLog -ScriptLog $ScriptLog -Message "PSWindows Update Packer script finished applying updates" -Level INFO    
     Write-EventLog -LogName SYSTEM -Source $EventIDSrc -EventId 0 -EntryType INFO -Message "PSWindows Update Packer script finished applying updates" 
     Start-Sleep -Seconds 5
-    Close-InstallationProgress
+    #Close-InstallationProgress
     Disable-ScheduledTask -TaskName Get-WinUpdatesPacker -ErrorAction SilentlyContinue
 
 }    
