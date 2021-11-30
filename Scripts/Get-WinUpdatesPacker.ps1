@@ -188,7 +188,7 @@ Else {
     
     Start-Sleep -Seconds 5
     
-    Start-Process notepad -ArgumentList "$((GCI C:\admin\Build | Select-Object -first 1).FullName) "
+    Start-Process notepad -ArgumentList "$ScriptLog"
 
     Close-InstallationProgress
 
