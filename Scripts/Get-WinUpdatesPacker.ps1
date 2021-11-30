@@ -42,6 +42,9 @@ Nov 29, 2021
 -Total script time tagged @ end
 -Build log opened @ end
 
+Nov 30, 2021
+-Updated code to ID correct log name
+
 .DESCRIPTION
 Author oreynolds@gmail.com
 
@@ -57,7 +60,7 @@ N/A
 
 $EventIDSrc = "PSWindowsUpdate"
 $LogTimeStamp = (Get-Date).ToString('MM-dd-yyyy-hhmm-tt')
-$ScriptLog = (Get-ChildItem C:\Admin\Build | Sort-Object -Property LastWriteTime | Select -first 1).FullName
+$ScriptLog = (Get-ChildItem C:\Admin\Build | Sort-Object -Property LastWriteTime | Where-object {$_.Name -like "WinPackerBuild*"} | Select -first 1).FullName
 
 ### Functions
 
