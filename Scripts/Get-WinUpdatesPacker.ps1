@@ -172,6 +172,7 @@ Else {
     Write-EventLog -LogName SYSTEM -Source $EventIDSrc -EventId 0 -EntryType INFO -Message "PSWindows Update Packer script finished applying updates" 
     Start-Sleep -Seconds 5
     #Close-InstallationProgress
+    [Environment]::SetEnvironmentVariable("WinPackerBuildEndDate", $(Get-Date), [EnvironmentVariableTarget]::Machine)
     Disable-ScheduledTask -TaskName Get-WinUpdatesPacker -ErrorAction SilentlyContinue
 
 }    
