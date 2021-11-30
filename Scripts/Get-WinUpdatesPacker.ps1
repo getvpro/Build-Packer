@@ -39,6 +39,9 @@ Nov 29, 2021
     3: 'netsh winsock reset catalog' added to Enable-WinRM
     4: Install line now Get-WUInstall -MicrosoftUpdate -AcceptAll -UpdateType Software -Install -AutoReboot -IgnoreUserInput
 
+-Total script time tagged @ end
+-Build log opened @ end
+
 .DESCRIPTION
 Author oreynolds@gmail.com
 
@@ -166,14 +169,28 @@ IF  ($Updates -ne $Null) {
 }
 
 Else {
-
-    #Show-InstallationProgress -StatusMessage "No windows updates to install at this time. the scheduled task will be disabled"
     Write-CustomLog -ScriptLog $ScriptLog -Message "PSWindows Update Packer script finished applying updates" -Level INFO    
-    Write-EventLog -LogName SYSTEM -Source $EventIDSrc -EventId 0 -EntryType INFO -Message "PSWindows Update Packer script finished applying updates" 
-    Start-Sleep -Seconds 5
-    #Close-InstallationProgress
+    Write-EventLog -LogName SYSTEM -Source $EventIDSrc -EventId 0 -EntryType INFO -Message "The base packer build has completed" 
+    Start-Sleep -Seconds 5    
     [Environment]::SetEnvironmentVariable("WinPackerBuildEndDate", $(Get-Date), [EnvironmentVariableTarget]::Machine)
+    $TotalBuildTime = [Datetime]::ParseExact($env:WinPackerBuildEndDate, 'MM/dd/yyyy HH:mm:ss', $null) - [Datetime]::ParseExact($env:WinPackerBuildStartDate, 'MM/dd/yyyy HH:mm:ss', $null) 
     Disable-ScheduledTask -TaskName Get-WinUpdatesPacker -ErrorAction SilentlyContinue
 
-}    
+    Show-InstallationProgress -StatusMessage "The base packer build has completed
+    `r
+    Total processing time was $($TotalBuildTime.Minutes) minutes and $($TotalBuildTime.Seconds) seconds
+    `r
+    The log will open for your review in 5 seconds
+    "
+    
+    Start-Sleep -Seconds 5
+    
+    Start-Process notepad -ArgumentList "$((GCI C:\admin\Build | Select-Object -first 1).FullName) "
+
+    Close-InstallationProgress
+
+    
+}
+
+
 
