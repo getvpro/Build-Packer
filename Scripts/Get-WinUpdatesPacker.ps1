@@ -178,20 +178,25 @@ Else {
     [Environment]::SetEnvironmentVariable("WinPackerBuildEndDate", $(Get-Date), [EnvironmentVariableTarget]::Machine)
     $TotalBuildTime = [Datetime]::ParseExact($env:WinPackerBuildEndDate, 'MM/dd/yyyy HH:mm:ss', $null) - [Datetime]::ParseExact($env:WinPackerBuildStartDate, 'MM/dd/yyyy HH:mm:ss', $null) 
     Disable-ScheduledTask -TaskName Get-WinUpdatesPacker -ErrorAction SilentlyContinue
-
+    
     Show-InstallationProgress -StatusMessage "The base packer build has completed
-    `r
-    Total processing time was $($TotalBuildTime.Minutes) minutes and $($TotalBuildTime.Seconds) seconds
-    `r
-    The log will open for your review in 5 seconds
+    `r    
+    The log will open for your review in 5 seconds    
     "
     
-    Start-Sleep -Seconds 5
+    Start-Sleep -Seconds 5    
     
-    Start-Process notepad -ArgumentList "$ScriptLog"
+	Start-Process notepad -ArgumentList "$ScriptLog"
+
+    Show-InstallationProgress -StatusMessage "
+    `r
+    Total processing time was $($TotalBuildTime.Minutes) minutes and $($TotalBuildTime.Seconds) seconds
+    `r    
+    "
+    
+    Start-Sleep -Seconds 300
 
     Close-InstallationProgress
-
     
 }
 
