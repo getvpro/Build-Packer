@@ -42,11 +42,11 @@ Nov 29, 2021
 -Total script time tagged @ end
 -Build log opened @ end
 
-Dec 4, 2021
--Added code to disable Edge scheduled tasks @ start
-
 Nov 30, 2021
 -Updated code to ID correct log name
+
+Dec 4, 2021
+-Added code to disable Edge scheduled tasks @ start
 
 .DESCRIPTION
 Author oreynolds@gmail.com
