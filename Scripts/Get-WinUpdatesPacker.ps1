@@ -20,7 +20,7 @@ control update
 
 write-host "Start windows update"
 
-usoclient StartInteractiveScan
+start-process -FilePath "C:\Windows\System32\UsoClient.exe" -ArgumentList "StartInteractiveScan"
 
 Do {
 
