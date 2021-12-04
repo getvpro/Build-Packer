@@ -42,6 +42,9 @@ Nov 29, 2021
 -Total script time tagged @ end
 -Build log opened @ end
 
+Dec 4, 2021
+-Added code to disable Edge scheduled tasks @ start
+
 Nov 30, 2021
 -Updated code to ID correct log name
 
@@ -108,6 +111,8 @@ IF (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
     EXIT
 
 }
+
+Get-ScheduledTask -TaskName MicrosoftEdgeUpdateTaskMachine* -ErrorAction SilentlyContinue | Disable-ScheduledTask
 
 IF (-not([System.Diagnostics.EventLog]::SourceExists("$EventIDSrc"))) {
     
