@@ -112,6 +112,7 @@ IF (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 
 }
 
+Get-ScheduledTask -TaskName MicrosoftEdgeUpdateTaskMachine* -ErrorAction SilentlyContinue | Stop-ScheduledTask
 Get-ScheduledTask -TaskName MicrosoftEdgeUpdateTaskMachine* -ErrorAction SilentlyContinue | Disable-ScheduledTask
 
 IF (-not([System.Diagnostics.EventLog]::SourceExists("$EventIDSrc"))) {
