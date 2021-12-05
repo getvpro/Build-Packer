@@ -14,9 +14,9 @@
     return $false
 }
 
-control update
+write-host "Launch windows update UI"
 
-write-host "Start windows update"
+control update
 
 Do {
 
@@ -27,11 +27,6 @@ Do {
 }
 
 Until ($aa -eq $True -and $bb -eq "Stopped") 
-
-### Need extra line to stop when no new updates required
-
-### install-module PSWindowsUpdate
-### Updates = Get-WUList
 
 write-warning "Reboot detected, rebooting in 30 seconds"
 start-sleep -s 30
