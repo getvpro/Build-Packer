@@ -1,4 +1,10 @@
-﻿Set-location "C:\Windows\System32"
+﻿### Dec 5, 2021
+### Added stop/disable MS Edge tasks
+
+Get-ScheduledTask -TaskName MicrosoftEdgeUpdateTaskMachine* -ErrorAction SilentlyContinue | Stop-ScheduledTask
+Get-ScheduledTask -TaskName MicrosoftEdgeUpdateTaskMachine* -ErrorAction SilentlyContinue | Disable-ScheduledTask
+
+Set-location "C:\Windows\System32"
 
 UsoClient.exe StartInteractiveScan
 
