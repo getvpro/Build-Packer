@@ -8,7 +8,6 @@ When no updates are left, the related scheduled tasks will be disabled
 Checks for status of windows updates started by Start-WinUpdates.ps1 script: UsoClient.exe StartInteractiveScan
 When no updates are left, the related scheduled tasks will be disabled
 
-
 .NOTES
 Change log
 
@@ -19,6 +18,10 @@ Dec 5, 2021
 -Added logging and module logic from Get-WinUpdatesPacker.ps1 script
 -ScriptLog changed to "C:\admin\Build\WindowsUpdates.txt"
 -Added Show-InstallationProgress once all windows updates have applied
+-PSADT installed as required
+-Added Close-InstallationProgress
+-Line 163, 3rd script called for reboot etc
+-ServiceUI.exe is now called externally for various show-installation messages
 
 .DESCRIPTION
 Author oreynolds@gmail.com
@@ -101,6 +104,12 @@ IF (!(Get-PackageProvider -ListAvailable nuget) ) {
 
 }
 
+IF (!(Get-Module -ListAvailable PSADT) ) {
+
+    Install-Module -name PSADT -AllowClobber -Force
+
+}
+
 ###
 Write-CustomLog -ScriptLog $ScriptLog -Message "Re-install PS windows update module" -Level INFO
 Install-module pswindowsupdate -force -AllowClobber
@@ -113,52 +122,54 @@ If ($Updates -eq $Nul) {
 
     [Environment]::SetEnvironmentVariable("WinPackerBuildEndDate", $(Get-Date), [EnvironmentVariableTarget]::Machine)
     
-    $PackerRegKey = (Get-ItemProperty -Path "hklm:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" -Name WinPackerBuildEndDate -ErrorAction SilentlyContinue).WinPackerBuildEndDate
+    $WinPackerBuildEndDate = (Get-ItemProperty -Path "hklm:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" -Name WinPackerBuildEndDate -ErrorAction SilentlyContinue).WinPackerBuildEndDate
     
-    $TotalBuildTime = [Datetime]::ParseExact($env:WinPackerBuildEndDate, 'MM/dd/yyyy HH:mm:ss', $null) - [Datetime]::ParseExact($env:WinPackerBuildStartDate, 'MM/dd/yyyy HH:mm:ss', $null) 
+    $TotalBuildTime = [Datetime]::ParseExact($WinPackerBuildEndDate , 'MM/dd/yyyy HH:mm:ss', $null) - [Datetime]::ParseExact($env:WinPackerBuildStartDate, 'MM/dd/yyyy HH:mm:ss', $null)
+    $TotalHours = $TotalBuildTime | Select-Object -ExpandProperty Hours
+    $TotalMinutes = $TotalBuildTime | Select-Object -ExpandProperty Minutes
+    $TotalSeconds = $TotalBuildTime | Select-Object -ExpandProperty Seconds
     
-    Write-CustomLog -ScriptLog $ScriptLog -Message "no windows updates to apply, start/monitor windows update tasks will be disabled and the script will exit" -Level INFO
+    Write-CustomLog -ScriptLog $ScriptLog -Message "No windows updates to apply, start/monitor windows update tasks will be disabled and the script will exit" -Level INFO
+    Write-CustomLog -ScriptLog $ScriptLog -Message "Build completed $TotalBuildTime" -Level INFO       
 
     Get-ScheduledTask -TaskName "*WinUpdates*" | Disable-ScheduledTask
 
-    Show-InstallationProgress -StatusMessage "Automated Windows updates installs have completed `n
+    c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -Executionpolicy bypass -Command "
+    import-module PSADT;
+    Show-InstallationProgress -StatusMessage 'Automated Windows updates installs have completed `n
+    The total build time was $TotalHours hours $TotalMinutes minutes $TotalSeconds seconds `n
     The related scheduled tasks will be disabled and the script will exit `n
-    $($Env:Computername) is ready to be joined to the domain"
-
+    $($Env:Computername) is ready to be joined to the domain';    
+    Pause
     Close-InstallationProgress
-    
     EXIT
-
+    "
 }
 
-Write-CustomLog -ScriptLog $ScriptLog -Message "The following windows updates will be installed: `n $($Updates | Out-String)" -Level INFO    
+Write-CustomLog -ScriptLog $ScriptLog -Message "The following windows updates will be installed: `n $($Updates | Out-String)" -Level INFO
 
 write-host "Launch windows update UI"
 
-control update
+c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -WindowStyle minimized -Executionpolicy bypass -Command "control update"
 
 Do {
 
     Write-host "Check for windows update status, sleep for 10 seconds" -ForegroundColor cyan    
     $aa = Test-PendingReboot
     $bb = get-service -Name msiserver | Select-Object -ExpandProperty Status
-    Start-Sleep -s 10
+    write-host "Pending reboot is now $aa"
+    write-host "Status of Windows installer service is now $bb"
+    Start-Sleep -s 10    
 }
 
 Until ($aa -eq "True" -and $bb -eq "Stopped")
 
 Write-CustomLog -ScriptLog $ScriptLog -Message "Windows updates have finished processing, machine will be rebooted in 60 seconds" -Level INFO
 
-#Install-Module -name PSADT -AllowClobber -Force
-import-module PSADT
-
-Show-InstallationProgress -StatusMessage "Windows updates have finished processing, machine will be rebooted in 60 seconds"
-
-start-sleep -s 60
-
-restart-computer -force
-
-    
-
-
-  
+c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -WindowStyle minimized -Executionpolicy bypass -Command "
+import-module PSADT;
+Show-InstallationProgress -StatusMessage 'Windows updates have finished processing, machine will be rebooted in 60 seconds';
+start-sleep -s 1
+Close-InstallationProgress
+Restart-computer -force
+" 
