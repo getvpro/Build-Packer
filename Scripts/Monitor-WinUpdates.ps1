@@ -102,7 +102,9 @@ IF (!(Get-PackageProvider -ListAvailable nuget) ) {
 }
 
 ###
+Write-CustomLog -ScriptLog $ScriptLog -Message "Re-install PS windows update module" -Level INFO
 Install-module pswindowsupdate -force -AllowClobber
+
 Import-Module -Name PSWindowsUpdate
 
 $Updates = Get-WUList
@@ -143,11 +145,14 @@ Do {
     Start-Sleep -s 10
 }
 
-Until ($aa -eq $True -and $bb -eq "Stopped")
+Until ($aa -eq "True" -and $bb -eq "Stopped")
 
 Write-CustomLog -ScriptLog $ScriptLog -Message "Windows updates have finished processing, machine will be rebooted in 60 seconds" -Level INFO
 
+#Install-Module -name PSADT -AllowClobber -Force
 import-module PSADT
+
+Show-InstallationProgress -StatusMessage "Windows updates have finished processing, machine will be rebooted in 60 seconds"
 
 start-sleep -s 60
 
