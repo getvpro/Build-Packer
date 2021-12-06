@@ -17,7 +17,8 @@ Dec 4, 2021
 
 Dec 5, 2021
 -Added logging and module logic from Get-WinUpdatesPacker.ps1 script
-
+-ScriptLog changed to "C:\admin\Build\WindowsUpdates.txt"
+-Added Show-InstallationProgress once all windows updates have applied
 
 .DESCRIPTION
 Author oreynolds@gmail.com
@@ -35,7 +36,7 @@ N/A
 ## Variables
 
 $LogTimeStamp = (Get-Date).ToString('MM-dd-yyyy-hhmm-tt')
-$ScriptLog = (Get-ChildItem C:\Admin\Build | Sort-Object -Property LastWriteTime | Where-object {$_.Name -like "WinPackerBuild*"} | Select -first 1).FullName
+$ScriptLog = "C:\admin\Build\WindowsUpdates.txt"
 
 ### Functions
 
@@ -74,7 +75,6 @@ Function Write-CustomLog {
         Add-content -value "$Message" -Path $ScriptLog
 }
 
-
 Function Test-PendingReboot {
     if (Get-ChildItem "HKLM:\Software\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending" -EA Ignore) { return $true }
     if (Get-Item "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired" -EA Ignore) { return $true }
@@ -101,22 +101,30 @@ IF (!(Get-PackageProvider -ListAvailable nuget) ) {
 
 }
 
-IF (!(Get-Module -ListAvailable -Name PSWindowsUpdate)) {
-
-    Install-module pswindowsupdate -force -AllowClobber
-    Write-CustomLog -ScriptLog $ScriptLog -Message "The PSWindowsUpdate module will be installed" -Level INFO
-}
-
 ###
-
+Install-module pswindowsupdate -force -AllowClobber
 Import-Module -Name PSWindowsUpdate
 
 $Updates = Get-WUList
 
 If ($Updates -eq $Nul) {
 
+    [Environment]::SetEnvironmentVariable("WinPackerBuildEndDate", $(Get-Date), [EnvironmentVariableTarget]::Machine)
+    
+    $PackerRegKey = (Get-ItemProperty -Path "hklm:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" -Name WinPackerBuildEndDate -ErrorAction SilentlyContinue).WinPackerBuildEndDate
+    
+    $TotalBuildTime = [Datetime]::ParseExact($env:WinPackerBuildEndDate, 'MM/dd/yyyy HH:mm:ss', $null) - [Datetime]::ParseExact($env:WinPackerBuildStartDate, 'MM/dd/yyyy HH:mm:ss', $null) 
+    
     Write-CustomLog -ScriptLog $ScriptLog -Message "no windows updates to apply, start/monitor windows update tasks will be disabled and the script will exit" -Level INFO
+
     Get-ScheduledTask -TaskName "*WinUpdates*" | Disable-ScheduledTask
+
+    Show-InstallationProgress -StatusMessage "Automated Windows updates installs have completed `n
+    The related scheduled tasks will be disabled and the script will exit `n
+    $($Env:Computername) is ready to be joined to the domain"
+
+    Close-InstallationProgress
+    
     EXIT
 
 }
@@ -129,17 +137,17 @@ control update
 
 Do {
 
-    Write-host "Check for windows update status, sleep for 30 seconds" -ForegroundColor cyan
-    Start-Sleep -s 30
+    Write-host "Check for windows update status, sleep for 10 seconds" -ForegroundColor cyan    
     $aa = Test-PendingReboot
     $bb = get-service -Name msiserver | Select-Object -ExpandProperty Status
-    #$bb = get-service -Name BITS | Select-Object -ExpandProperty Status
-    #$bb = Get-WUInstallerStatus | Select-Object -ExpandProperty IsBusy
+    Start-Sleep -s 10
 }
 
-Until ($aa -eq $True -and $bb -eq "Stopped") 
+Until ($aa -eq $True -and $bb -eq "Stopped")
 
 Write-CustomLog -ScriptLog $ScriptLog -Message "Windows updates have finished processing, machine will be rebooted in 60 seconds" -Level INFO
+
+import-module PSADT
 
 start-sleep -s 60
 
