@@ -15,6 +15,66 @@ July 25, 2020
 July 27, 2020
 -Amended to support Win 10
 
+Aug 25, 2021
+-Added import of PSWindowsUpdate
+
+Nov 25, 2021
+-Install PowerShell App Deploy toolkit
+-Downloaded PSWindows Update and set as scheduled task
+-Setup scheduled task for initial build tasks
+-Download and run Optimize-BaseImage
+-Replaced reg calls with native Powershell equivalent
+
+Nov 26, 2021
+-c:\Scripts changed to c:\Admin\Scripts
+-Removed search box from HKCU
+
+Nov 27, 2021
+-Additional code to download scripts from github
+-Import of Windows Updates PS task
+-PSADT used for installation progress
+-ServiceUI is downloaded from github
+
+Nov 28, 2021
+-Start-Optimized based image no longer launched minimized
+-Custom logging added
+
+Nov 29, 2021
+-Removed WinRM code @ end
+-Exit it not started elevated (admin)
+-Environment variables for WinPackerStart/End added
+-7-Zip portable download / install
+-Fr-Ca language pack download / install
+
+Nov 30, 2021
+-c:\Admin\7-Zip is no longer created, as it's covered by .zip extraction
+-Updated code to remove Fr-Ca .zip file set
+
+Dec 1, 2021
+-Logging method updated to reference new environment variable pushed from autounattend.xml that's only used with packer
+-Server manager disable moved to start
+-Search window disable moved to start
+-c:\Admin\* folders creation moved to start
+-RDP/network changes moved to start
+-Exit if not started as admin moved to start
+-Powershell security changes for TLS 1.2
+-Commented out above security changes as part of testing
+-Moved $ScriptLog variable before function that uses it
+-Created $PackerRegKey
+-Above $PackerRegKey resolved issues with $ScriptLog not being read, pause statements removed
+
+Dec 2, 2021
+-Code to import Windows update run on boot scheduled task disabled
+
+Dec 4, 2021
+-Code to import Windows update run on boot scheduled task re-enabled
+-Added code to stop/disable Edge scheduled tasks @ start
+-Removed un-needed restart of explorer.exe @ start
+-New PS1 /XML Start/Monitor win updates
+
+Dec 5, 2021
+-Fixed path on lines 240-245 for XML/PS1 download
+
 .DESCRIPTION
 Author oreynolds@gmail.com
 
@@ -28,25 +88,137 @@ https://github.com/getvpro/Build-Packer
 
 #>
 
-write-host "Running first steps after GUI logon" -ForegroundColor Cyan
+IF (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+
+    write-warning "not started as elevated session, exiting"    
+    EXIT
+
+}
+
+### Variables
+
+# Powershell module/package management pre-reqs
+[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+[System.Net.WebRequest]::DefaultWebProxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials
+
+$OS = (Get-WMIobject -class win32_operatingsystem).Caption
+$LogTimeStamp = (Get-Date).ToString('MM-dd-yyyy-hhmm-tt')
+$PackerRegKey = (Get-ItemProperty -Path "hklm:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" -Name PackerLaunched -ErrorAction SilentlyContinue).PackerLaunched
+
+new-item -ItemType Directory -Path "c:\Admin\Scripts"
+new-item -ItemType Directory -Path "C:\Admin\Build"
+new-item -ItemType Directory -Path "C:\Admin\Language Pack"
+
+# Set log path based on being launched by packer, or not
+
+IF ($PackerRegKey -eq 1) {
+
+    $ScriptLog = "c:\Admin\Build\WinPackerBuild-$LogTimeStamp.txt"
+    
+}
+
+Else {
+    
+    $ScriptLog = (Get-ChildItem C:\Admin\Build | Sort-Object -Property LastWriteTime | Where-object {$_.Name -like "WinPackerBuild*"} | Select -first 1).FullName
+
+}
+
+if (-not(Get-Variable ScriptLog -ErrorAction SilentlyContinue)) {
+
+	Write-warning "Script log not set, script will exit"	
+	EXIT
+}
+
+### End Variables
+
+### Functions
+
+Function Write-CustomLog {
+    Param(
+    [String]$ScriptLog,    
+    [String]$Message,
+    [String]$Level
+    
+    )
+
+    switch ($Level) { 
+        'Error' 
+            {
+            $LevelText = 'ERROR:' 
+            $Message = "$(Get-Date): $LevelText Ran from $Env:computername by $($Env:Username): $Message"
+            Write-host $Message -ForegroundColor RED            
+            } 
+        
+        'Warn'
+            { 
+            $LevelText = 'WARNING:' 
+            $Message = "$(Get-Date): $LevelText Ran from $Env:computername by $($Env:Username): $Message"
+            Write-host $Message -ForegroundColor YELLOW            
+            } 
+
+        'Info'
+            { 
+            $LevelText = 'INFO:' 
+            $Message = "$(Get-Date): $LevelText Ran from $Env:computername by $($Env:Username): $Message"
+            Write-host $Message -ForegroundColor GREEN            
+            } 
+
+        }
+        
+        Add-content -value "$Message" -Path "$ScriptLog"
+}
+
+### Part 1 - Start of script processing, first steps, requires no internet connection
+
+write-host "Start of part 1 in 3 seconds . . ." -ForegroundColor Cyan
+start-sleep -s 3
+
+Get-ScheduledTask -TaskName MicrosoftEdgeUpdateTaskMachine* -ErrorAction SilentlyContinue | Stop-ScheduledTask
+Get-ScheduledTask -TaskName MicrosoftEdgeUpdateTaskMachine* -ErrorAction SilentlyContinue | Disable-ScheduledTask
+
+New-ItemProperty -Path "HKCU:\Software\Microsoft\ServerManager" -Name "DoNotOpenServerManagerAtLogon" -PropertyType DWORD -Value "0x1" –Force
+New-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "SearchboxTaskbarMode" -PropertyType DWORD -Value "0x1" -Force
 
 IF (Get-process "servermanager" -ErrorAction SilentlyContinue) {
 
-    Stop-Process -name servermanager -Force
-    New-ItemProperty -Path HKCU:\Software\Microsoft\ServerManager -Name DoNotOpenServerManagerAtLogon -PropertyType DWORD -Value "0x1" –Force
+    Stop-Process -name servermanager -Force    
 }
 
-### Disable network discovery
-write-host "Disable network discovery and open RDP" -ForegroundColor Cyan
-reg ADD HKLM\SYSTEM\CurrentControlSet\Control\Network\NewNetworkWindowOff /f
+New-Item -Path HKLM:\SYSTEM\CurrentControlSet\Control\Network\NewNetworkWindowOff -Force
+
 netsh advfirewall firewall set rule group="Network Discovery" new enable=No
 
 ### Open RDP
 netsh advfirewall firewall add rule name="Open Port 3389" dir=in action=allow protocol=TCP localport=3389
-reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
 
-# Set Temp Variable using PowerShell
-write-host "Setting temp folder" -ForegroundColor Cyan
+New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" -name fDenyTSConnections -PropertyType DWORD -Value 0 -Force
+
+Write-host "Restart explorer"
+
+stop-process -Name explorer
+
+### Part 2 - Requires internet connection, install Powershell package managers and modules
+
+Write-CustomLog -ScriptLog $ScriptLog -Message "Installing PowershellGet / nuget package providers" -Level INFO
+
+Install-PackageProvider -Name PowerShellGet -Force -Confirm:$False
+Install-PackageProvider -Name Nuget -Force -Confirm:$False
+
+Write-CustomLog -ScriptLog $ScriptLog -Message "Installing Powershell App Deploy ToolKit module" -Level INFO
+Install-Module -Name PSADT -AllowClobber -Force -Confirm:$False
+
+if (Get-module -ListAvailable -name PSADT) {
+
+ Write-host "Pre-req PSADT is installed, script will continue" -ForegroundColor Green
+
+}
+
+Else {
+ 
+ Write-CustomLog -ScriptLog $ScriptLog -Message "Internet / Proxy / Firewall issues are preventing the installation of pre-req modules, please resolve and re-try, script will exit" -Level ERROR 
+ EXIT
+
+}
 
 $TempFolder = "C:\TEMP"
 New-Item -ItemType Directory -Force -Path $TempFolder
@@ -55,6 +227,100 @@ New-Item -ItemType Directory -Force -Path $TempFolder
 [Environment]::SetEnvironmentVariable("TEMP", $TempFolder, [EnvironmentVariableTarget]::User)
 [Environment]::SetEnvironmentVariable("TMP", $TempFolder, [EnvironmentVariableTarget]::User)
 
-write-host "Script completed! Moving to next step after 5 second pause" -ForegroundColor Cyan
+[Environment]::SetEnvironmentVariable("WinPackerBuildStartDate", $(Get-Date), [EnvironmentVariableTarget]::Machine)
+
+### Part 3
+
+Show-InstallationProgress -StatusMessage "part 3 of the $OS automated build is in progress, scripts will be downloaded from git hub"
+
+Write-CustomLog -ScriptLog $ScriptLog -Message "Downloading scripts and binaries from github repo getvpro" -Level INFO
+
+Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/getvpro/Standard-WinBuilds/master/Start-OptimizeBaseImage.ps1 -OutFile c:\admin\Scripts\Start-OptimizeBaseImage.ps1
+
+#Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/getvpro/Build-Packer/master/Scripts/Get-WinUpdatesPacker.ps1 -OutFile c:\admin\Scripts\Get-WinUpdatesPacker.ps1
+#Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/getvpro/Build-Packer/master/Scripts/Get-WinUpdatesPacker.xml -OutFile c:\admin\Scripts\Get-WinUpdatesPacker.xml
+
+Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/getvpro/Build-Packer/master/Scripts/Start-WinUpdates.ps1 -OutFile c:\admin\Scripts\Start-WinUpdates.ps1
+Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/getvpro/Build-Packer/master/Scripts/Start-WinUpdates.xml -OutFile c:\admin\Scripts\Start-WinUpdates.xml
+
+Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/getvpro/Build-Packer/master/Scripts/Monitor-WinUpdates.ps1 -OutFile c:\admin\Scripts\Monitor-WinUpdates.ps1
+Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/getvpro/Build-Packer/master/Scripts/Monitor-WinUpdates.xml -OutFile c:\admin\Scripts\Monitor-WinUpdates.xml
+
+$EXEGIT = "https://github.com/getvpro/Build-Packer/raw/master/ServiceUI.exe"
+$File = Invoke-WebRequest -Uri $EXEGIT -UseDefaultCredentials -Method Get -UseBasicParsing
+[System.IO.File]::WriteAllBytes("C:\Windows\System32\ServiceUI.exe", $File.Content)
+
+Close-InstallationProgress
+
+set-location C:\admin\Scripts
+
+Write-CustomLog -ScriptLog $ScriptLog -Message "Running Optimize Base image script" -Level INFO
+
+Show-InstallationProgress -StatusMessage "Running Optimize Base image script"
+
+powershell.exe -executionpolicy bypass -file .\Start-OptimizeBaseImage.ps1
+
+Close-InstallationProgress
+
+Write-CustomLog -ScriptLog $ScriptLog -Message "Importing Windows Update task" -Level INFO
+
+#Register-ScheduledTask -XML (Get-content "C:\Admin\Scripts\Get-WinUpdatesPacker.xml" | Out-String) -TaskName Get-WinUpdatesPacker -Force
+
+Register-ScheduledTask -XML (Get-content "C:\Admin\Scripts\Start-WinUpdates.xml" | Out-String) -TaskName Start-WinUpdates -Force
+
+Register-ScheduledTask -XML (Get-content "C:\Admin\Scripts\Monitor-WinUpdates.xml" | Out-String) -TaskName Monitor-WinUpdates -Force
+
+New-Shortcut -Path C:\users\packman\desktop\BuildLogs.lnk -TargetPath C:\Admin\Build
+
+### Fr-ca language pack download for Server 2022 systems / Win 10 21H1 is pending
+
+Write-CustomLog -ScriptLog $ScriptLog -Message "Downloading / installing 7-zip" -Level INFO
+
+Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Binaries/7-ZipPortable.zip?raw=true" -OutFile "c:\Admin\7-Zip.zip"
+
+Expand-Archive "C:\Admin\7-Zip.zip" -DestinationPath "C:\Admin\"
+
+Remove-item "C:\Admin\7-Zip.zip" -Force
+
+Write-CustomLog -ScriptLog $ScriptLog -Message "Downloading Fr-ca.cab multi-part 7 zip file from git hub" -Level INFO
+
+Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Server%202022/Language%20Packs/Server%202022/Fr-ca/Microsoft-Windows-Server-Language-Pack_x64_fr-ca.zip.001?raw=true" `
+-OutFile "C:\Admin\Language Pack\Microsoft-Windows-Server-Language-Pack_x64_fr-ca.zip.001"
+
+Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Server%202022/Language%20Packs/Server%202022/Fr-ca/Microsoft-Windows-Server-Language-Pack_x64_fr-ca.zip.002?raw=true" `
+-OutFile "C:\Admin\Language Pack\Microsoft-Windows-Server-Language-Pack_x64_fr-ca.zip.002"
+
+Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Server%202022/Language%20Packs/Server%202022/Fr-ca/Microsoft-Windows-Server-Language-Pack_x64_fr-ca.zip.003?raw=true" `
+-OutFile "C:\Admin\Language Pack\Microsoft-Windows-Server-Language-Pack_x64_fr-ca.zip.003"
+
+Set-Location 'C:\Admin\Language Pack'
+
+Write-CustomLog -ScriptLog $ScriptLog -Message "Extracting Fr-ca.cab multi-part 7-zip" -Level INFO
+
+start-process "C:\Admin\7-ZipPortable\App\7-Zip64\7z.exe" -ArgumentList "e *.zip*"
+
+Write-CustomLog -ScriptLog $ScriptLog -Message "Installing Fr-ca.cab, this process can be up to 10 mins" -Level INFO
+
+Show-InstallationProgress -StatusMessage "Installing Fr-ca language pack from downloaded .CAB `
+ Note, this process can be up to 10 mins"
+
+Add-WindowsPackage -Online -PackagePath "C:\Admin\Language Pack\Microsoft-Windows-Server-Language-Pack_x64_fr-ca.cab" -LogPath "C:\admin\Build\Fr-ca-Install.log" -NoRestart
+
+Write-CustomLog -ScriptLog $ScriptLog -Message "Adding Fr-Ca to preferred display languages" -Level INFO
+
+$OldList = Get-WinUserLanguageList
+$OldList.Add("fr-CA")
+Set-WinUserLanguageList -LanguageList $OldList -Confirm:$False -Force
+
+Write-CustomLog -ScriptLog $ScriptLog -Message "Remove .zip files that contained Fr-ca.cab" -Level INFO
+
+Get-ChildItem -Path "C:\Admin\Language Pack" -Exclude *.cab | Remove-Item -Force
+
+Close-InstallationProgress
+
+### END
+
+Write-CustomLog -ScriptLog $ScriptLog -Message "Start-FirstSteps script completed, the script will close in 5 seconds" -Level INFO
 start-sleep -s 5
+
 
