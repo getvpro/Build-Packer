@@ -15,6 +15,13 @@ Change log
 July 24, 2020
 - Initial version
 
+Nov 28, 2021
+-Added Write-CustomLog function
+
+Nov 30, 2021
+-Updated code to ID correct log name
+-Added Show-Status function
+
 .DESCRIPTION
 Author oreynolds@gmail.com and Tim from the scriptech.io blog
 https://scriptech.io/automatically-reinstalling-vmware-tools-on-server2016-after-the-first-attempt-fails-to-install-the-vmtools-service/
@@ -30,7 +37,8 @@ https://github.com/getvpro/Build-Packer
 
 #>
 
-#Install VMWare Tools # REBOOT=R means supress reboot
+$LogTimeStamp = (Get-Date).ToString('MM-dd-yyyy-hhmm-tt')
+$ScriptLog = (Get-ChildItem C:\Admin\Build | Sort-Object -Property LastWriteTime | Where-object {$_.Name -like "WinPackerBuild*"} | Select -first 1).FullName
 
 Function Get-VMToolsInstalled {
     
@@ -47,14 +55,63 @@ Function Get-VMToolsInstalled {
     return $Version
 }
 
+Function Write-CustomLog {
+    Param(
+    [String]$ScriptLog,    
+    [String]$Message,
+    [String]$Level
+    
+    )
+
+    switch ($Level) { 
+        'Error' 
+            {
+            $LevelText = 'ERROR:' 
+            $Message = "$(Get-Date): $LevelText Ran from $Env:computername by $($Env:Username): $Message"
+            Write-host $Message -ForegroundColor RED            
+            } 
+        
+        'Warn'
+            { 
+            $LevelText = 'WARNING:' 
+            $Message = "$(Get-Date): $LevelText Ran from $Env:computername by $($Env:Username): $Message"
+            Write-host $Message -ForegroundColor YELLOW            
+            } 
+
+        'Info'
+            { 
+            $LevelText = 'INFO:' 
+            $Message = "$(Get-Date): $LevelText Ran from $Env:computername by $($Env:Username): $Message"
+            Write-host $Message -ForegroundColor GREEN            
+            } 
+
+        }
+        
+        Add-content -value "$Message" -Path $ScriptLog
+}
+
+Function Show-Status {
+
+    import-module PSADT -Force
+
+    Show-InstallationProgress -StatusMessage "VMware tools is installed `n
+    The remote packer instance will power off the VM to complete phase 1 of the build process `n
+    The PowerCLI script running on the same machine running packer will then power the VM back on `n
+    With the VM powered back on, phase 2 will start, where a custom Windows Update task / script will be downloaded/imported/ran to fully patch the system"
+
+    Start-Sleep -Seconds 5
+
+    Close-InstallationProgress
+
+}
 
 ### 1 - Set the current working directory to whichever drive corresponds to the mounted VMWare Tools installation ISO
 
 Set-Location e:
 
 ### 2 - Install attempt #1
+Write-CustomLog -ScriptLog $ScriptLog -Message "Starting VMware tools install first attempt 1" -Level INFO
 
-write-host "Starting VMware tools install first attempt 1" -ForegroundColor cyan
 Start-Process "setup64.exe" -ArgumentList '/s /v "/qb REBOOT=R"' -Wait
 
 ### 3 - After the installation is finished, check to see if the 'VMTools' service enters the 'Running' state every 2 seconds for 10 seconds
@@ -76,17 +133,15 @@ while (-not$Running -and $iRepeat -lt 5) {
   else {
 
     $Running = $true
-    write-host "VMware tools service found to be running state after first install attempt" -ForegroundColor green
-
+    Write-CustomLog -ScriptLog $ScriptLog -Message "VMware tools service found to be running state after first install attempt" -Level INFO
   }
 
 }
-
 ### 4 - If the service never enters the 'Running' state, re-install VMWare Tools
 if (-not$Running) {
 
   #Uninstall VMWare Tools
-  write-host "Running un-install on first attempt of VMware tools install" -ForegroundColor cyan
+  Write-CustomLog -ScriptLog $ScriptLog -Message "Running un-install on first attempt of VMware tools install" -Level WARN
 
   IF (Get-VMToolsInstalled -eq "32") {
   
@@ -104,13 +159,14 @@ if (-not$Running) {
   
   Start-Process -FilePath msiexec.exe -ArgumentList "/X $GUID /quiet /norestart" -Wait  
 
-  write-host "Running re-install of VMware tools install" -ForegroundColor cyan 
+  Write-CustomLog -ScriptLog $ScriptLog -Message "Running re-install of VMware tools install" -Level INFO
+    
   #Install VMWare Tools
   Start-Process "setup64.exe" -ArgumentList '/s /v "/qb REBOOT=R"' -Wait
 
   ### 6 - Re-check again if VMTools service has been installed and is started
 
-Write-host "Re-check again if VMTools service has been installed and is started" -ForegroundColor Cyan
+ Write-CustomLog -ScriptLog $ScriptLog -Message "Re-checking if VMTools service has been installed and is started" -Level INFO 
   
 $iRepeat = 0
 while (-not$Running -and $iRepeat -lt 5) {
@@ -128,8 +184,8 @@ while (-not$Running -and $iRepeat -lt 5) {
     Else {
 
       $Running = $true
-      write-host "VMware tools service found to be running state after SECOND install attempt" -ForegroundColor green
-
+      Write-CustomLog -ScriptLog $ScriptLog -Message "VMware tools service found to be running state after SECOND install attempt" -Level INFO
+      Show-Status
     }
 
   }
@@ -137,9 +193,17 @@ while (-not$Running -and $iRepeat -lt 5) {
   ### 7 If after the reinstall, the service is still not running, this is a failed deployment
 
   IF (-not$Running) {
+    Write-CustomLog -ScriptLog $ScriptLog -Message "VMWare Tools is still not installed correctly. The packer automated deployment will not process any further until VMWare Tools is installed" -Level ERROR    
     
-    Write-Host -ForegroundColor Red "VMWare Tools are still not installed correctly. This is a failed deployment."
-    Pause
+    Show-InstallationProgress -StatusMessage "VMWare Tools is still NOT installed correctly `n
+    The packer automated deployment will not process any further until the VMTools Windows service is started, check under services.msc `n
+    Please troubleshoot `n
+    This progress window will remain up for 5 minutes, then auto-close `n
+    If you want to close this progress window now, run 'close-InstallationProgress from the parent Powershell process"
+        
+    Start-Sleep -Seconds 300
+    Close-InstallationProgress
+    EXIT
 
   }
 

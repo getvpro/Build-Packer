@@ -27,6 +27,10 @@ Aug 15, 2020
 Sept 23, 2020
 -Janky code to create .lnk with "run as admin"
 
+Nov 26, 2021
+-c:\Scripts | C:\Admin\Scripts
+
+
 .DESCRIPTION
 Author oreynolds@gmail.com
 
@@ -53,22 +57,22 @@ If (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
     Exit
 }
 
-IF (-not(Test-path c:\Scripts)) {
+IF (-not(Test-path c:\Admin\Scripts)) {
 
-    New-Item -ItemType Directory "C:\Scripts" 
+    New-Item -ItemType Directory "C:\AdminScripts" 
 
 }
 
-IF (-not(Test-path "C:\Scripts\Start-DomainJoin.ps1" -ErrorAction SilentlyContinue)) {
+IF (-not(Test-path "C:\Admin\Scripts\Start-DomainJoin.ps1" -ErrorAction SilentlyContinue)) {
     
-    Copy-item a:\Start-DomainJoin.ps1 C:\Scripts -Force -ErrorAction SilentlyContinue
+    Copy-item a:\Start-DomainJoin.ps1 C:\Admin\Scripts -Force -ErrorAction SilentlyContinue
     
     ### Shortcut creation    
     
     $WshShell = New-Object -ComObject WScript.Shell
     $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\Join Active Directory.lnk")
     $Shortcut.TargetPath = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"    
-    $Shortcut.Arguments = '-NoProfile -ExecutionPolicy Bypass -File "C:\Scripts\Start-DomainJoin.ps1"'
+    $Shortcut.Arguments = '-NoProfile -ExecutionPolicy Bypass -File "C:\Admin\Scripts\Start-DomainJoin.ps1"'
     $Shortcut.IconLocation = ",0"    
     $Shortcut.WindowStyle = 1 #Minimized
     $Shortcut.WorkingDirectory = "C:\Scripts"
@@ -87,7 +91,7 @@ IF (-not(Test-path "C:\Scripts\Start-DomainJoin.ps1" -ErrorAction SilentlyContin
     EXIT
 }
 
-IF (test-path C:\Scripts\Start-DomainJoin.ps1) {
+IF (test-path C:\Admin\Scripts\Start-DomainJoin.ps1) {
 
     $UserResponse = [System.Windows.Forms.MessageBox]::Show($Text,"Domain Join" , 4, 32)
 
