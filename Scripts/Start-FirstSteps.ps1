@@ -75,8 +75,11 @@ Dec 4, 2021
 Dec 5, 2021
 -Fixed path on lines 240-245 for XML/PS1 download
 
+Dec 17, 2021
+-Added OS detection to support downloads / installs of Fr-CA language pack for both Win 10 / Win 2022
+
 .DESCRIPTION
-Author oreynolds@gmail.com
+Author https://github.com/getvpro (Owen Reynolds)
 
 .EXAMPLE
 ./Start-FirstSteps.ps1
@@ -237,9 +240,6 @@ Write-CustomLog -ScriptLog $ScriptLog -Message "Downloading scripts and binaries
 
 Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/getvpro/Standard-WinBuilds/master/Start-OptimizeBaseImage.ps1 -OutFile c:\admin\Scripts\Start-OptimizeBaseImage.ps1
 
-#Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/getvpro/Build-Packer/master/Scripts/Get-WinUpdatesPacker.ps1 -OutFile c:\admin\Scripts\Get-WinUpdatesPacker.ps1
-#Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/getvpro/Build-Packer/master/Scripts/Get-WinUpdatesPacker.xml -OutFile c:\admin\Scripts\Get-WinUpdatesPacker.xml
-
 Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/getvpro/Build-Packer/master/Scripts/Start-WinUpdates.ps1 -OutFile c:\admin\Scripts\Start-WinUpdates.ps1
 Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/getvpro/Build-Packer/master/Scripts/Start-WinUpdates.xml -OutFile c:\admin\Scripts\Start-WinUpdates.xml
 
@@ -284,14 +284,28 @@ Remove-item "C:\Admin\7-Zip.zip" -Force
 
 Write-CustomLog -ScriptLog $ScriptLog -Message "Downloading Fr-ca.cab multi-part 7 zip file from git hub" -Level INFO
 
-Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Server%202022/Language%20Packs/Server%202022/Fr-ca/Microsoft-Windows-Server-Language-Pack_x64_fr-ca.zip.001?raw=true" `
--OutFile "C:\Admin\Language Pack\Microsoft-Windows-Server-Language-Pack_x64_fr-ca.zip.001"
+IF ($OS -like "Windows 10*") {
 
-Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Server%202022/Language%20Packs/Server%202022/Fr-ca/Microsoft-Windows-Server-Language-Pack_x64_fr-ca.zip.002?raw=true" `
--OutFile "C:\Admin\Language Pack\Microsoft-Windows-Server-Language-Pack_x64_fr-ca.zip.002"
+    Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Win%2010%202004,%2020H1,%2021H2/Win10-21H1-x64-Fr-Ca.zip.001?raw=true" `
+    -OutFile "C:\Admin\Language Pack\Win10-21H1-x64-Fr-Ca.zip.001"
 
-Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Server%202022/Language%20Packs/Server%202022/Fr-ca/Microsoft-Windows-Server-Language-Pack_x64_fr-ca.zip.003?raw=true" `
--OutFile "C:\Admin\Language Pack\Microsoft-Windows-Server-Language-Pack_x64_fr-ca.zip.003"
+    Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Win%2010%202004,%2020H1,%2021H2/Win10-21H1-x64-Fr-Ca.zip.002?raw=true" `
+    -OutFile "C:\Admin\Language Pack\Win10-21H1-x64-Fr-Ca.zip.002"
+
+}
+
+IF ($OS -like "Windows Server*") {
+
+    Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Server%202022/Server-2022-x64-Fr-Ca.zip.001?raw=true" `
+    -OutFile "C:\Admin\Language Pack\Server-2022-x64-Fr-Ca.zip.001"
+
+    Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Server%202022/Server-2022-x64-Fr-Ca.zip.002?raw=true" `
+    -OutFile "C:\Admin\Language Pack\Server-2022-x64-Fr-Ca.zip.002"
+
+    Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Server%202022/Server-2022-x64-Fr-Ca.zip.003?raw=true" `
+    -OutFile "C:\Admin\Language Pack\Server-2022-x64-Fr-Ca.zip.003"
+
+}
 
 Set-Location 'C:\Admin\Language Pack'
 
@@ -301,10 +315,20 @@ start-process "C:\Admin\7-ZipPortable\App\7-Zip64\7z.exe" -ArgumentList "e *.zip
 
 Write-CustomLog -ScriptLog $ScriptLog -Message "Installing Fr-ca.cab, this process can be up to 10 mins" -Level INFO
 
-Show-InstallationProgress -StatusMessage "Installing Fr-ca language pack from downloaded .CAB `
+Show-InstallationProgress -StatusMessage "Installing Fr-ca language pack from downloaded .CAB for $OS `
  Note, this process can be up to 10 mins"
 
-Add-WindowsPackage -Online -PackagePath "C:\Admin\Language Pack\Microsoft-Windows-Server-Language-Pack_x64_fr-ca.cab" -LogPath "C:\admin\Build\Fr-ca-Install.log" -NoRestart
+IF ($OS -like "*Windows 10*") {
+
+    Add-WindowsPackage -Online -PackagePath "C:\Admin\Language Pack\Win10-21H1-x64-Fr-Ca.cab" -LogPath "C:\admin\Build\Fr-ca-Install.log" -NoRestart
+    
+} 
+
+IF ($OS -like "*Windows Server*") {
+
+    Add-WindowsPackage -Online -PackagePath "C:\Admin\Language Pack\Server-2022-x64-Fr-Ca.cab" -LogPath "C:\admin\Build\Fr-ca-Install.log" -NoRestart
+    
+}
 
 Write-CustomLog -ScriptLog $ScriptLog -Message "Adding Fr-Ca to preferred display languages" -Level INFO
 
