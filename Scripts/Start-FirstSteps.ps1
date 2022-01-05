@@ -81,6 +81,9 @@ Dec 17, 2021
 .DESCRIPTION
 Author https://github.com/getvpro (Owen Reynolds)
 
+Jan 05, 2021
+-Line 327: Fixed missing * for server OS detection
+
 .EXAMPLE
 ./Start-FirstSteps.ps1
 
@@ -294,7 +297,7 @@ IF ($OS -like "Windows 10*") {
 
 }
 
-IF ($OS -like "Windows Server*") {
+IF ($OS -like "*Windows Server*") {
 
     Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Server%202022/Server-2022-x64-Fr-Ca.zip.001?raw=true" `
     -OutFile "C:\Admin\Language Pack\Server-2022-x64-Fr-Ca.zip.001"
@@ -346,5 +349,4 @@ Close-InstallationProgress
 
 Write-CustomLog -ScriptLog $ScriptLog -Message "Start-FirstSteps script completed, the script will close in 5 seconds" -Level INFO
 start-sleep -s 5
-
 
