@@ -99,25 +99,25 @@ Function Test-PendingReboot {
 
 ###
 
-Write-CustomLog -ScriptLog $ScriptLog -Message "Installing pre-req modules as required, please wait" -Level INFO
-
 IF (!(Get-PackageProvider -ListAvailable nuget) ) {
 
     Install-PackageProvider -Name NuGet -Force
     Write-CustomLog -ScriptLog $ScriptLog -Message "The Nuget package manager will be installed" -Level INFO
-    Write-EventLog -LogName SYSTEM -Source $EventIDSrc -EventId 0 -EntryType INFO -Message "The Nuget package manager will be installed"
-
 }
 
 IF (!(Get-Module -ListAvailable PSADT) ) {
 
+    Write-CustomLog -ScriptLog $ScriptLog -Message "The PSADT module will be installed" -Level INFO
     Install-Module -name PSADT -AllowClobber -Force
+}
 
+IF (!(Get-Module -ListAvailable PSWindowsUpdate) ) {
+
+    Write-CustomLog -ScriptLog $ScriptLog -Message "The PSWindowsUpdate module will be installed" -Level INFO
+    Install-module PSWindowsUpdate -force -AllowClobber
 }
 
 ###
-Write-CustomLog -ScriptLog $ScriptLog -Message "Re-installing PS windows update module" -Level INFO
-Install-module pswindowsupdate -force -AllowClobber
 
 Write-CustomLog -ScriptLog $ScriptLog -Message "Importing PS Windows update module and checking for any updates to apply" -Level INFO
 
@@ -150,8 +150,11 @@ If ($Updates -eq $Nul) {
 
     c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -WindowStyle minimized -Executionpolicy bypass -Command "
     Add-Type -AssemblyName System.Windows.Forms;
-    [System.Windows.Forms.MessageBox]::Show('$BuildCompleteText', 'Base Windows Build Complete', 0,0);
+    [System.Windows.Forms.MessageBox]::Show('$BuildCompleteText', 'Base Windows Build Complete', 0,0)    
     "
+
+    Write-CustomLog -ScriptLog $ScriptLog -Message "Script is on line 158 just before EXIT when no further windows updates are required" -Level INFO
+    
     EXIT
 }
 
@@ -165,7 +168,8 @@ Else {
 
     Do {
 
-        Write-host "Check for windows update status, sleep for 10 seconds" -ForegroundColor cyan    
+        Write-host "Check for windows update status, sleep for 10 seconds" -ForegroundColor cyan
+        Write-CustomLog -ScriptLog $ScriptLog -Message "Script is on line 171, the Do/unitl loop that polls for reboot status every 10 seconds" -Level INFO
         $aa = Test-PendingReboot
         $bb = get-service -Name msiserver | Select-Object -ExpandProperty Status
         write-host "Pending reboot is now $aa"
@@ -180,9 +184,11 @@ Else {
     Write-CustomLog -ScriptLog $ScriptLog -Message "Windows updates have finished processing, machine will be rebooted in 60 seconds" -Level INFO
 
     c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -WindowStyle minimized -Executionpolicy bypass `
-    -Command "(New-Object -comObject Wscript.Shell).Popup('Windows updates have finished processing click OK to reboot or now, or wait 60 seconds',10,'INFO',0+64)
-    EXIT
+    -Command "(New-Object -comObject Wscript.Shell).Popup('Windows updates have finished processing click OK to reboot or now, or wait 60 seconds',60,'INFO',0+64)    
     "
+    Write-CustomLog -ScriptLog $ScriptLog -Message "Script is on line 187, aka, the end" -Level INFO
+
+    EXIT
     Restart-Computer -Force
 
 }
