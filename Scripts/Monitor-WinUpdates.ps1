@@ -23,6 +23,9 @@ Dec 5, 2021
 -Line 163, 3rd script called for reboot etc
 -ServiceUI.exe is now called externally for various show-installation messages
 
+Jan 7, 2022
+-Various edits to get around issues with Close-InstallationProgress windows not working as of 2022
+
 .DESCRIPTION
 Author oreynolds@gmail.com
 
@@ -96,6 +99,8 @@ Function Test-PendingReboot {
 
 ###
 
+Write-CustomLog -ScriptLog $ScriptLog -Message "Installing pre-req modules as required, please wait" -Level INFO
+
 IF (!(Get-PackageProvider -ListAvailable nuget) ) {
 
     Install-PackageProvider -Name NuGet -Force
@@ -111,8 +116,10 @@ IF (!(Get-Module -ListAvailable PSADT) ) {
 }
 
 ###
-Write-CustomLog -ScriptLog $ScriptLog -Message "Re-install PS windows update module" -Level INFO
+Write-CustomLog -ScriptLog $ScriptLog -Message "Re-installing PS windows update module" -Level INFO
 Install-module pswindowsupdate -force -AllowClobber
+
+Write-CustomLog -ScriptLog $ScriptLog -Message "Importing PS Windows update module and checking for any updates to apply" -Level INFO
 
 Import-Module -Name PSWindowsUpdate
 
@@ -134,42 +141,50 @@ If ($Updates -eq $Nul) {
 
     Get-ScheduledTask -TaskName "*WinUpdates*" | Disable-ScheduledTask
 
-    c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -Executionpolicy bypass -Command "
-    import-module PSADT;
-    Show-InstallationProgress -StatusMessage 'Automated Windows updates installs have completed `n
+    $BuildCompleteText = "
+    The Windows updates phase has now completed `n
     The total build time was $TotalHours hours $TotalMinutes minutes $TotalSeconds seconds `n
-    The related scheduled tasks will be disabled and the script will exit `n
-    $($Env:Computername) is ready to be joined to the domain';    
-    Pause
-    Close-InstallationProgress
+    The related schedled tasks will be disabled and the script will exit `n
+    $($Env:Computername) is ready to be joined to the domain `n
+    Press [OK] now to EXIT `n    "
+
+    c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -WindowStyle minimized -Executionpolicy bypass -Command "
+    Add-Type -AssemblyName System.Windows.Forms;
+    [System.Windows.Forms.MessageBox]::Show('$BuildCompleteText', 'Base Windows Build Complete', 0,0);
+    "
+    EXIT
+}
+
+Else {
+
+    Write-CustomLog -ScriptLog $ScriptLog -Message "The following windows updates will be installed: `n $($Updates | Out-String)" -Level INFO
+
+    write-host "Launch windows update UI"
+
+    c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -WindowStyle minimized -Executionpolicy bypass -Command "control update"
+
+    Do {
+
+        Write-host "Check for windows update status, sleep for 10 seconds" -ForegroundColor cyan    
+        $aa = Test-PendingReboot
+        $bb = get-service -Name msiserver | Select-Object -ExpandProperty Status
+        write-host "Pending reboot is now $aa"
+        write-host "Status of Windows installer service is now $bb"
+        Start-Sleep -s 10
+    }
+
+    Until ($aa -eq "True" -and $bb -eq "Stopped")
+
+    ### End of the line
+
+    Write-CustomLog -ScriptLog $ScriptLog -Message "Windows updates have finished processing, machine will be rebooted in 60 seconds" -Level INFO
+
+    c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -WindowStyle minimized -Executionpolicy bypass `
+    -Command "(New-Object -comObject Wscript.Shell).Popup('Windows updates have finished processing click OK to reboot or now, or wait 60 seconds',10,'INFO',0+64)
     EXIT
     "
+    Restart-Computer -Force
+
 }
 
-Write-CustomLog -ScriptLog $ScriptLog -Message "The following windows updates will be installed: `n $($Updates | Out-String)" -Level INFO
 
-write-host "Launch windows update UI"
-
-c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -WindowStyle minimized -Executionpolicy bypass -Command "control update"
-
-Do {
-
-    Write-host "Check for windows update status, sleep for 10 seconds" -ForegroundColor cyan    
-    $aa = Test-PendingReboot
-    $bb = get-service -Name msiserver | Select-Object -ExpandProperty Status
-    write-host "Pending reboot is now $aa"
-    write-host "Status of Windows installer service is now $bb"
-    Start-Sleep -s 10    
-}
-
-Until ($aa -eq "True" -and $bb -eq "Stopped")
-
-Write-CustomLog -ScriptLog $ScriptLog -Message "Windows updates have finished processing, machine will be rebooted in 60 seconds" -Level INFO
-
-c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -WindowStyle minimized -Executionpolicy bypass -Command "
-import-module PSADT;
-Show-InstallationProgress -StatusMessage 'Windows updates have finished processing, machine will be rebooted in 60 seconds';
-start-sleep -s 1
-Close-InstallationProgress
-Restart-computer -force
-" 
