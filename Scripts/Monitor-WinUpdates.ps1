@@ -23,10 +23,11 @@ Dec 5, 2021
 -Line 163, 3rd script called for reboot etc
 -ServiceUI.exe is now called externally for various show-installation messages
 
-Jan 7, 2022: Diagnostic
+Jan 7, 2022
 -Various edits to get around issues with Close-InstallationProgress windows not working as of 2022
 -Removed check on windows update service running before reboot, as it's a false positive
 -Updated Do/Loop to use PSWindowSUpdate module
+-Using wscript for some pop up messages 
 
 .DESCRIPTION
 Author oreynolds@gmail.com
