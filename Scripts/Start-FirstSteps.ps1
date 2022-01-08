@@ -84,6 +84,10 @@ Author https://github.com/getvpro (Owen Reynolds)
 Jan 05, 2021
 -Line 327: Fixed missing * for server OS detection
 
+Jan 06, 2021
+-Detection of sys env variable from autounattend.xml to install Fr-Ca lang pack
+
+
 .EXAMPLE
 ./Start-FirstSteps.ps1
 
@@ -110,6 +114,7 @@ IF (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 $OS = (Get-WMIobject -class win32_operatingsystem).Caption
 $LogTimeStamp = (Get-Date).ToString('MM-dd-yyyy-hhmm-tt')
 $PackerRegKey = (Get-ItemProperty -Path "hklm:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" -Name PackerLaunched -ErrorAction SilentlyContinue).PackerLaunched
+$FrenchCaLangPack = (Get-ItemProperty -Path "hklm:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" -Name FrenchCaLangPack -ErrorAction SilentlyContinue).FrenchCaLangPack
 
 new-item -ItemType Directory -Path "c:\Admin\Scripts"
 new-item -ItemType Directory -Path "C:\Admin\Build"
@@ -277,73 +282,86 @@ New-Shortcut -Path C:\users\packman\desktop\BuildLogs.lnk -TargetPath C:\Admin\B
 
 ### Fr-ca language pack download for Server 2022 systems / Win 10 21H1 is pending
 
-Write-CustomLog -ScriptLog $ScriptLog -Message "Downloading / installing 7-zip" -Level INFO
+If ($FrenchCaLangPack -eq 1) {
 
-Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Binaries/7-ZipPortable.zip?raw=true" -OutFile "c:\Admin\7-Zip.zip"
+    Write-CustomLog -ScriptLog $ScriptLog -Message "FrenchCaLangPack key is set to 1, proceeeding with extra steps to provision Fr-Ca lang pack" -Level INFO
 
-Expand-Archive "C:\Admin\7-Zip.zip" -DestinationPath "C:\Admin\"
+    Write-CustomLog -ScriptLog $ScriptLog -Message "Downloading / installing 7-zip" -Level INFO
 
-Remove-item "C:\Admin\7-Zip.zip" -Force
+    Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Binaries/7-ZipPortable.zip?raw=true" -OutFile "c:\Admin\7-Zip.zip"
 
-Write-CustomLog -ScriptLog $ScriptLog -Message "Downloading Fr-ca.cab multi-part 7 zip file from git hub" -Level INFO
+    Expand-Archive "C:\Admin\7-Zip.zip" -DestinationPath "C:\Admin\"
 
-IF ($OS -like "Windows 10*") {
+    Remove-item "C:\Admin\7-Zip.zip" -Force
 
-    Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Win%2010%202004,%2020H1,%2021H2/Win10-21H1-x64-Fr-Ca.zip.001?raw=true" `
-    -OutFile "C:\Admin\Language Pack\Win10-21H1-x64-Fr-Ca.zip.001"
+    Write-CustomLog -ScriptLog $ScriptLog -Message "Downloading Fr-ca.cab multi-part 7 zip file from git hub" -Level INFO
 
-    Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Win%2010%202004,%2020H1,%2021H2/Win10-21H1-x64-Fr-Ca.zip.002?raw=true" `
-    -OutFile "C:\Admin\Language Pack\Win10-21H1-x64-Fr-Ca.zip.002"
+    IF ($OS -like "Windows 10*") {
 
-}
+        Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Win%2010%202004,%2020H1,%2021H2/Win10-21H1-x64-Fr-Ca.zip.001?raw=true" `
+        -OutFile "C:\Admin\Language Pack\Win10-21H1-x64-Fr-Ca.zip.001"
 
-IF ($OS -like "*Windows Server*") {
+        Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Win%2010%202004,%2020H1,%2021H2/Win10-21H1-x64-Fr-Ca.zip.002?raw=true" `
+        -OutFile "C:\Admin\Language Pack\Win10-21H1-x64-Fr-Ca.zip.002"
 
-    Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Server%202022/Server-2022-x64-Fr-Ca.zip.001?raw=true" `
-    -OutFile "C:\Admin\Language Pack\Server-2022-x64-Fr-Ca.zip.001"
+    }
 
-    Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Server%202022/Server-2022-x64-Fr-Ca.zip.002?raw=true" `
-    -OutFile "C:\Admin\Language Pack\Server-2022-x64-Fr-Ca.zip.002"
+    IF ($OS -like "*Windows Server*") {
 
-    Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Server%202022/Server-2022-x64-Fr-Ca.zip.003?raw=true" `
-    -OutFile "C:\Admin\Language Pack\Server-2022-x64-Fr-Ca.zip.003"
+        Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Server%202022/Server-2022-x64-Fr-Ca.zip.001?raw=true" `
+        -OutFile "C:\Admin\Language Pack\Server-2022-x64-Fr-Ca.zip.001"
 
-}
+        Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Server%202022/Server-2022-x64-Fr-Ca.zip.002?raw=true" `
+        -OutFile "C:\Admin\Language Pack\Server-2022-x64-Fr-Ca.zip.002"
 
-Set-Location 'C:\Admin\Language Pack'
+        Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Server%202022/Server-2022-x64-Fr-Ca.zip.003?raw=true" `
+        -OutFile "C:\Admin\Language Pack\Server-2022-x64-Fr-Ca.zip.003"
 
-Write-CustomLog -ScriptLog $ScriptLog -Message "Extracting Fr-ca.cab multi-part 7-zip" -Level INFO
+    }
 
-start-process "C:\Admin\7-ZipPortable\App\7-Zip64\7z.exe" -ArgumentList "e *.zip*"
+    Set-Location 'C:\Admin\Language Pack'
 
-Write-CustomLog -ScriptLog $ScriptLog -Message "Installing Fr-ca.cab, this process can be up to 10 mins" -Level INFO
+    Write-CustomLog -ScriptLog $ScriptLog -Message "Extracting Fr-ca.cab multi-part 7-zip" -Level INFO
 
-Show-InstallationProgress -StatusMessage "Installing Fr-ca language pack from downloaded .CAB for $OS `
- Note, this process can be up to 10 mins"
+    start-process "C:\Admin\7-ZipPortable\App\7-Zip64\7z.exe" -ArgumentList "e *.zip*"
 
-IF ($OS -like "*Windows 10*") {
+    Write-CustomLog -ScriptLog $ScriptLog -Message "Installing Fr-ca.cab, this process can be up to 10 mins" -Level INFO
 
-    Add-WindowsPackage -Online -PackagePath "C:\Admin\Language Pack\Win10-21H1-x64-Fr-Ca.cab" -LogPath "C:\admin\Build\Fr-ca-Install.log" -NoRestart
+    Show-InstallationProgress -StatusMessage "Installing Fr-ca language pack from downloaded .CAB for $OS `
+     Note, this process can be up to 10 mins"
+
+    IF ($OS -like "*Windows 10*") {
+
+        Add-WindowsPackage -Online -PackagePath "C:\Admin\Language Pack\Win10-21H1-x64-Fr-Ca.cab" -LogPath "C:\admin\Build\Fr-ca-Install.log" -NoRestart
     
-} 
+    } 
 
-IF ($OS -like "*Windows Server*") {
+    IF ($OS -like "*Windows Server*") {
 
-    Add-WindowsPackage -Online -PackagePath "C:\Admin\Language Pack\Server-2022-x64-Fr-Ca.cab" -LogPath "C:\admin\Build\Fr-ca-Install.log" -NoRestart
+        Add-WindowsPackage -Online -PackagePath "C:\Admin\Language Pack\Server-2022-x64-Fr-Ca.cab" -LogPath "C:\admin\Build\Fr-ca-Install.log" -NoRestart
     
+    }
+
+    Write-CustomLog -ScriptLog $ScriptLog -Message "Adding Fr-Ca to preferred display languages" -Level INFO
+
+    $OldList = Get-WinUserLanguageList
+    $OldList.Add("fr-CA")
+    Set-WinUserLanguageList -LanguageList $OldList -Confirm:$False -Force
+
+    Write-CustomLog -ScriptLog $ScriptLog -Message "Remove .zip files that contained Fr-ca.cab" -Level INFO
+
+    Get-ChildItem -Path "C:\Admin\Language Pack" -Exclude *.cab | Remove-Item -Force
+
+    Close-InstallationProgress
+
 }
 
-Write-CustomLog -ScriptLog $ScriptLog -Message "Adding Fr-Ca to preferred display languages" -Level INFO
+Else {
 
-$OldList = Get-WinUserLanguageList
-$OldList.Add("fr-CA")
-Set-WinUserLanguageList -LanguageList $OldList -Confirm:$False -Force
+    Write-CustomLog -ScriptLog $ScriptLog -Message "FrenchCaLangPack key is not set to 1. Only En-US will be enabled on this system" -Level INFO
 
-Write-CustomLog -ScriptLog $ScriptLog -Message "Remove .zip files that contained Fr-ca.cab" -Level INFO
+}
 
-Get-ChildItem -Path "C:\Admin\Language Pack" -Exclude *.cab | Remove-Item -Force
-
-Close-InstallationProgress
 
 ### END
 
