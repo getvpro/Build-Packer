@@ -23,8 +23,9 @@ Dec 5, 2021
 -Line 163, 3rd script called for reboot etc
 -ServiceUI.exe is now called externally for various show-installation messages
 
-Jan 7, 2022
+Jan 7, 2022: Diagnostic
 -Various edits to get around issues with Close-InstallationProgress windows not working as of 2022
+-Removed check on windows update service running before reboot, as it's a false positive
 
 .DESCRIPTION
 Author oreynolds@gmail.com
@@ -150,10 +151,10 @@ If ($Updates -eq $Nul) {
 
     c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -WindowStyle minimized -Executionpolicy bypass -Command "
     Add-Type -AssemblyName System.Windows.Forms;
-    [System.Windows.Forms.MessageBox]::Show('$BuildCompleteText', 'Base Windows Build Complete', 0,0)    
+    [System.Windows.Forms.MessageBox]::Show('$BuildCompleteText', 'Base Windows Build Complete', 0,0)
     "
 
-    Write-CustomLog -ScriptLog $ScriptLog -Message "Script is on line 158 just before EXIT when no further windows updates are required" -Level INFO
+    Write-CustomLog -ScriptLog $ScriptLog -Message "Windows updates completed, build is ready for the next phase" -Level INFO
     
     EXIT
 }
@@ -169,7 +170,7 @@ Else {
     Do {
 
         Write-host "Check for windows update status, sleep for 10 seconds" -ForegroundColor cyan
-        Write-CustomLog -ScriptLog $ScriptLog -Message "Script is on line 171, the Do/unitl loop that polls for reboot status every 10 seconds" -Level INFO
+        Write-CustomLog -ScriptLog $ScriptLog -Message "Check for windows update status, sleep for 10 seconds" -Level INFO
         $aa = Test-PendingReboot
         #$bb = get-service -Name msiserver | Select-Object -ExpandProperty Status
         write-host "Pending reboot is now $aa"
@@ -187,7 +188,7 @@ Else {
     c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -WindowStyle minimized -Executionpolicy bypass `
     -Command "(New-Object -comObject Wscript.Shell).Popup('Windows updates have finished processing click OK to reboot or now, or wait 60 seconds',60,'INFO',0+64)    
     "
-    Write-CustomLog -ScriptLog $ScriptLog -Message "Script is on line 187, aka, the end" -Level INFO
+    Write-CustomLog -ScriptLog $ScriptLog -Message "End of logging before graceful reboot" -Level INFO
     
     Restart-Computer -Force
 
