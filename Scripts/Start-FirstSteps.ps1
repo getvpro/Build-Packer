@@ -86,7 +86,7 @@ Jan 05, 2021
 
 Jan 06, 2021
 -Detection of sys env variable from autounattend.xml to install Fr-Ca lang pack
-
+-Various edits to Show-InstallationProgress
 
 .EXAMPLE
 ./Start-FirstSteps.ps1
@@ -242,7 +242,9 @@ New-Item -ItemType Directory -Force -Path $TempFolder
 
 ### Part 3
 
-Show-InstallationProgress -StatusMessage "part 3 of the $OS automated build is in progress, scripts will be downloaded from git hub"
+Show-InstallationProgress -StatusMessage "Part 3 of the $OS automated build is in progress, scripts will be downloaded from git hub"
+
+start-sleep -s 3
 
 Write-CustomLog -ScriptLog $ScriptLog -Message "Downloading scripts and binaries from github repo getvpro" -Level INFO
 
@@ -271,8 +273,6 @@ powershell.exe -executionpolicy bypass -file .\Start-OptimizeBaseImage.ps1
 Close-InstallationProgress
 
 Write-CustomLog -ScriptLog $ScriptLog -Message "Importing Windows Update task" -Level INFO
-
-#Register-ScheduledTask -XML (Get-content "C:\Admin\Scripts\Get-WinUpdatesPacker.xml" | Out-String) -TaskName Get-WinUpdatesPacker -Force
 
 Register-ScheduledTask -XML (Get-content "C:\Admin\Scripts\Start-WinUpdates.xml" | Out-String) -TaskName Start-WinUpdates -Force
 
@@ -362,9 +362,12 @@ Else {
 
 }
 
-
 ### END
 
 Write-CustomLog -ScriptLog $ScriptLog -Message "Start-FirstSteps script completed, the script will close in 5 seconds" -Level INFO
+
+Show-InstallationProgress -StatusMessage "Start-FirstSteps script completed, the script will close in 5 seconds"
+
 start-sleep -s 5
 
+Get-process | Where {$_.MainWindowTitle -like "PS App Deploy Toolkit*"} | Where {$_.Name -eq "Powershell"} | Stop-Process -force
