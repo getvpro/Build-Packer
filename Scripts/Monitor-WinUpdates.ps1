@@ -171,13 +171,14 @@ Else {
         Write-host "Check for windows update status, sleep for 10 seconds" -ForegroundColor cyan
         Write-CustomLog -ScriptLog $ScriptLog -Message "Script is on line 171, the Do/unitl loop that polls for reboot status every 10 seconds" -Level INFO
         $aa = Test-PendingReboot
-        $bb = get-service -Name msiserver | Select-Object -ExpandProperty Status
+        #$bb = get-service -Name msiserver | Select-Object -ExpandProperty Status
         write-host "Pending reboot is now $aa"
         write-host "Status of Windows installer service is now $bb"
         Start-Sleep -s 10
     }
 
-    Until ($aa -eq "True" -and $bb -eq "Stopped")
+    Until ($aa -eq "True")
+    #Until ($aa -eq "True" -and $bb -eq "Stopped")
 
     ### End of the line
 
@@ -187,8 +188,7 @@ Else {
     -Command "(New-Object -comObject Wscript.Shell).Popup('Windows updates have finished processing click OK to reboot or now, or wait 60 seconds',60,'INFO',0+64)    
     "
     Write-CustomLog -ScriptLog $ScriptLog -Message "Script is on line 187, aka, the end" -Level INFO
-
-    EXIT
+    
     Restart-Computer -Force
 
 }
