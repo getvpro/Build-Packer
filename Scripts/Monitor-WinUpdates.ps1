@@ -26,6 +26,7 @@ Dec 5, 2021
 Jan 7, 2022: Diagnostic
 -Various edits to get around issues with Close-InstallationProgress windows not working as of 2022
 -Removed check on windows update service running before reboot, as it's a false positive
+-Updated Do/Loop to use PSWindowSUpdate module
 
 .DESCRIPTION
 Author oreynolds@gmail.com
@@ -170,16 +171,28 @@ Else {
     Do {
 
         Write-host "Check for windows update status, sleep for 10 seconds" -ForegroundColor cyan
+        
         Write-CustomLog -ScriptLog $ScriptLog -Message "Check for windows update status, sleep for 10 seconds" -Level INFO
-        $aa = Test-PendingReboot
-        #$bb = get-service -Name msiserver | Select-Object -ExpandProperty Status
-        write-host "Pending reboot is now $aa"
-        write-host "Status of Windows installer service is now $bb"
-        Start-Sleep -s 10
-    }
 
-    Until ($aa -eq "True")
-    #Until ($aa -eq "True" -and $bb -eq "Stopped")
+        $aa = Test-PendingReboot
+        
+        If ((Get-WUList | Measure).Count -eq 0) {
+         
+            $BB = $True
+        }
+
+        Else {
+
+            $BB = $false
+
+        }
+
+        write-host "Pending reboot is now $aa"
+        write-host "Windows updates remaining to process is now $bb"
+        Start-Sleep -s 10
+    }    
+    
+    Until ($aa -eq "True" -or $bb -eq $True)
 
     ### End of the line
 
