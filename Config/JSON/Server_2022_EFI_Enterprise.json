@@ -27,7 +27,7 @@
       "insecure_connection": "true",
       "iso_paths": [
         "{{user `os_iso_path`}}",
-        "[DATASTORE NAME HERE] SUBFOLDER/case_sensitive_path_to_VMware_Tools.iso"
+        "[DATASTORE NAME HERE] SUBFOLDER FOR ISO(s)/VmwareTools.iso"
       ],
       "network_adapters": [
         {
@@ -47,7 +47,7 @@
       "vcenter_server": "{{user `vsphere-server`}}",
       "vm_name": "{{user `vm-name`}}",
       "winrm_password": "{{user `winadmin-password`}}",
-      "winrm_username": "packman"
+      "winrm_username": "SameAdminNameAsAutoUnnattend.xml"
     }
   ],
   "provisioners": [
@@ -63,19 +63,19 @@
     "winadmin_password"
   ],
   "variables": {
-    "os_iso_path": "[DATASTORE NAME HERE] SUBFOLDER/case_sensitive_path_to_iso.iso",
+    "os_iso_path": "[DATASTORE NAME HERE] SUBFOLDER FOR ISO(s)/Windows_Server_2022_Exact_Case_Sensitive_Name_GOES_HERE.iso",    
     "vm-cpu-num": "2",
     "vm-disk-size": "40960",
     "vm-mem-size": "4096",
     "vm-name": "Win2022-Packer-Enterprise",
-    "vsphere-cluster": "CHANGE ME",
-    "vsphere-datacenter": "CHANGE ME",
-    "vsphere-datastore": "CHANGE ME",
-    "vsphere-folder": "CHANGE ME",
-    "vsphere-network": "CHANGE ME",
-    "vsphere-user": "CHANGE ME",
-    "vsphere-password": "CHANGE ME",
-    "vsphere-server": "CHANGE ME",
-    "winadmin-password": "CHANGE ME"
+    "vsphere-cluster": "YOUR CLUSTER NAME HERE",
+    "vsphere-datacenter": "YOUR DATACENTER NAME HERE",
+    "vsphere-datastore": "YOUR DATASTORE NAME HERE",
+    "vsphere-folder": "VM IMAGE FOLDER NAME HERE",
+    "vsphere-network": "VM Network name here",
+    "vsphere-user": "vCenter user with rights to create VMs/etc here",
+    "vsphere-password": "AMEND AS REQUIRED",
+    "vsphere-server": "YOUR vCENTER FQDN HERE",
+    "winadmin-password": "SAME AS IS SPECIFIED IN AUTOUNATTEND.XML"
   }
 }
