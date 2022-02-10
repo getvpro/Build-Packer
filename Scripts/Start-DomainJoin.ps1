@@ -30,6 +30,8 @@ Sept 23, 2020
 Nov 26, 2021
 -c:\Scripts | C:\Admin\Scripts
 
+Feb 10, 2022
+-Added pause statement at end to capture status
 
 .DESCRIPTION
 Author oreynolds@gmail.com
@@ -114,6 +116,7 @@ IF (test-path C:\Admin\Scripts\Start-DomainJoin.ps1) {
         
         Add-Computer -Credential $Cred -DomainName $DomainToJoin
         remove-item "$Home\Desktop\Join Active Directory.lnk" -Force
+        PAUSE
     }
 
 }
