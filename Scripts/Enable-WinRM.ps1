@@ -22,6 +22,9 @@ Nov 29, 2021
 Nov 30, 2021
 -Line 83 disabled to reduce false errors: Set-NetConnectionProfile -InterfaceAlias Ethernet -NetworkCategory Private
 
+Feb 10, 2022
+-Set-NetConnectionProfile -InterfaceAlias Ethernet -NetworkCategory Private
+
 .DESCRIPTION
 Author oreynolds@gmail.com
 
@@ -80,7 +83,7 @@ Write-CustomLog -ScriptLog $ScriptLog -Message "Enable WinRM for integration wit
 
 Write-CustomLog -ScriptLog $ScriptLog -Message "Set network connection profile to private" -Level INFO
 
-# Set-NetConnectionProfile -InterfaceAlias Ethernet -NetworkCategory Private
+Set-NetConnectionProfile -InterfaceAlias Ethernet -NetworkCategory Private
 
 Enable-PSRemoting -Force
 winrm quickconfig -q

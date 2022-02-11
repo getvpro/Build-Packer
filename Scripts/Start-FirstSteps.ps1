@@ -81,12 +81,22 @@ Dec 17, 2021
 .DESCRIPTION
 Author https://github.com/getvpro (Owen Reynolds)
 
-Jan 05, 2021
+Jan 05, 2022
 -Line 327: Fixed missing * for server OS detection
 
-Jan 06, 2021
+Jan 06, 2022
 -Detection of sys env variable from autounattend.xml to install Fr-Ca lang pack
 -Various edits to Show-InstallationProgress
+
+Jan 10, 2022
+-Edit to pause for IP check
+
+Jan 11, 2022
+-Code added to read in values from StaticIP.csv to deal with non-DHCP enabled environments
+-Set-TimeZone -ID "Eastern Standard Time" added @ start to resolve issues with logging
+
+Feb 11, 2022
+-Added Fr-CA support for Windows 11 21H1
 
 .EXAMPLE
 ./Start-FirstSteps.ps1
@@ -111,10 +121,13 @@ IF (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 [System.Net.WebRequest]::DefaultWebProxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials
 
+Set-TimeZone -ID "Eastern Standard Time"
+
 $OS = (Get-WMIobject -class win32_operatingsystem).Caption
 $LogTimeStamp = (Get-Date).ToString('MM-dd-yyyy-hhmm-tt')
 $PackerRegKey = (Get-ItemProperty -Path "hklm:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" -Name PackerLaunched -ErrorAction SilentlyContinue).PackerLaunched
 $FrenchCaLangPack = (Get-ItemProperty -Path "hklm:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" -Name FrenchCaLangPack -ErrorAction SilentlyContinue).FrenchCaLangPack
+$PackerStaticIP = (Get-ItemProperty -Path "hklm:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" -Name PackerStaticIP -ErrorAction SilentlyContinue).PackerStaticIP
 
 new-item -ItemType Directory -Path "c:\Admin\Scripts"
 new-item -ItemType Directory -Path "C:\Admin\Build"
@@ -181,8 +194,42 @@ Function Write-CustomLog {
 
 ### Part 1 - Start of script processing, first steps, requires no internet connection
 
+If ($PackerStaticIP -eq 1) {
+
+    write-host "Attempting to set IP based on StaticIP.CSV info" -ForegroundColor Cyan
+
+    $StaticIPcsv = import-csv "a:\StaticIP.csv"
+    $IPAddr = ($StaticIPcsv)[0].Value
+    $IPGW = ($StaticIPcsv)[1].Value
+    $DNS1 = ($StaticIPcsv)[2].Value
+    $DNS2 = ($StaticIPcsv)[3].Value
+
+    write-host "Changing IP address to $IPAddr. Seting defaults for gateway and DNS servers" -ForegroundColor cyan
+    Get-NetAdapter | Where Status -eq UP | New-NetIPAddress -IPAddress $IPAddr -PrefixLength 24 -DefaultGateway $IPGW
+    Get-NetAdapter | Where Status -eq UP | Set-DnsClientServerAddress -ServerAddresses $DNS1, $DNS2
+
+    IF ((Test-NetConnection $IPGW -ErrorAction SilentlyContinue).PingSucceeded -eq $True) {
+
+        Write-host "$IPGW pings back as expected" -ForegroundColor Green
+
+    }
+
+    Else {
+
+        Write-warning "Default gateway is not pinglabe"
+
+    }
+
+    write-host "Pause for IP check" -ForegroundColor Cyan
+
+    PAUSE
+
+}
+
 write-host "Start of part 1 in 3 seconds . . ." -ForegroundColor Cyan
 start-sleep -s 3
+
+[Environment]::SetEnvironmentVariable("WinPackerBuildStartDate", $(Get-Date), [EnvironmentVariableTarget]::Machine)
 
 Get-ScheduledTask -TaskName MicrosoftEdgeUpdateTaskMachine* -ErrorAction SilentlyContinue | Stop-ScheduledTask
 Get-ScheduledTask -TaskName MicrosoftEdgeUpdateTaskMachine* -ErrorAction SilentlyContinue | Disable-ScheduledTask
@@ -238,11 +285,9 @@ New-Item -ItemType Directory -Force -Path $TempFolder
 [Environment]::SetEnvironmentVariable("TEMP", $TempFolder, [EnvironmentVariableTarget]::User)
 [Environment]::SetEnvironmentVariable("TMP", $TempFolder, [EnvironmentVariableTarget]::User)
 
-[Environment]::SetEnvironmentVariable("WinPackerBuildStartDate", $(Get-Date), [EnvironmentVariableTarget]::Machine)
-
 ### Part 3
 
-Show-InstallationProgress -StatusMessage "Part 3 of the $OS automated build is in progress, scripts will be downloaded from git hub"
+Show-InstallationProgress -StatusMessage "Scripts will be downloaded from git hub"
 
 start-sleep -s 3
 
@@ -304,6 +349,15 @@ If ($FrenchCaLangPack -eq 1) {
         Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Win%2010%202004,%2020H1,%2021H2/Win10-21H1-x64-Fr-Ca.zip.002?raw=true" `
         -OutFile "C:\Admin\Language Pack\Win10-21H1-x64-Fr-Ca.zip.002"
 
+    }    
+    
+    IF ($OS -like "Windows 11*") {
+
+        Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Win%2011%2021H1/Microsoft-Windows-Client-Language-Pack_x64_fr-ca.7z.001?raw=true" `
+        -OutFile "C:\Admin\Language Pack\Win11-21H1-x64-Fr-Ca.zip.001"
+
+        Invoke-WebRequest -UseBasicParsing -Uri https://github.com/getvpro/Build-Packer/blob/master/Language%20Packs/Win%2011%2021H1/Microsoft-Windows-Client-Language-Pack_x64_fr-ca.7z.002?raw=true `
+        -OutFile "C:\Admin\Language Pack\Win11-21H1-x64-Fr-Ca.zip.002"
     }
 
     IF ($OS -like "*Windows Server*") {
@@ -333,21 +387,41 @@ If ($FrenchCaLangPack -eq 1) {
     IF ($OS -like "*Windows 10*") {
 
         Add-WindowsPackage -Online -PackagePath "C:\Admin\Language Pack\Win10-21H1-x64-Fr-Ca.cab" -LogPath "C:\admin\Build\Fr-ca-Install.log" -NoRestart
+        
+        Write-CustomLog -ScriptLog $ScriptLog -Message "Adding Fr-Ca to preferred display languages" -Level INFO
+
+		$OldList = Get-WinUserLanguageList
+		$OldList.Add("fr-CA")
+		Set-WinUserLanguageList -LanguageList $OldList -Confirm:$False -Force
     
     } 
+    
+    IF ($OS -like "*Windows 11*") {
+
+        Add-WindowsPackage -Online -PackagePath "C:\Admin\Language Pack\Win11-21H1-x64-Fr-Ca.cab" -LogPath "C:\admin\Build\Fr-ca-Install.log" -NoRestart
+        
+        Write-CustomLog -ScriptLog $ScriptLog -Message "Adding Fr-Ca to preferred display languages" -Level INFO
+
+		$OldList = Get-WinUserLanguageList
+		$OldList.Add("fr-CA")
+		Set-WinUserLanguageList -LanguageList $OldList -Confirm:$False -Force
+    
+    } 
+
 
     IF ($OS -like "*Windows Server*") {
 
         Add-WindowsPackage -Online -PackagePath "C:\Admin\Language Pack\Server-2022-x64-Fr-Ca.cab" -LogPath "C:\admin\Build\Fr-ca-Install.log" -NoRestart
+        
+        Write-CustomLog -ScriptLog $ScriptLog -Message "Adding Fr-Ca to preferred display languages" -Level INFO
+
+		$OldList = Get-WinUserLanguageList
+		$OldList.Add("fr-CA")
+		Set-WinUserLanguageList -LanguageList $OldList -Confirm:$False -Force
     
     }
 
-    Write-CustomLog -ScriptLog $ScriptLog -Message "Adding Fr-Ca to preferred display languages" -Level INFO
-
-    $OldList = Get-WinUserLanguageList
-    $OldList.Add("fr-CA")
-    Set-WinUserLanguageList -LanguageList $OldList -Confirm:$False -Force
-
+    
     Write-CustomLog -ScriptLog $ScriptLog -Message "Remove .zip files that contained Fr-ca.cab" -Level INFO
 
     Get-ChildItem -Path "C:\Admin\Language Pack" -Exclude *.cab | Remove-Item -Force
