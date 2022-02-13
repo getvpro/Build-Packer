@@ -22,6 +22,9 @@ Nov 30, 2021
 -Updated code to ID correct log name
 -Added Show-Status function
 
+Feb 13, 2022
+-Logging changed to new file, rather than adding to existing WinPackerBuild-date.txt file
+
 .DESCRIPTION
 Author oreynolds@gmail.com and Tim from the scriptech.io blog
 https://scriptech.io/automatically-reinstalling-vmware-tools-on-server2016-after-the-first-attempt-fails-to-install-the-vmtools-service/
@@ -36,9 +39,6 @@ https://scriptech.io/automatically-reinstalling-vmware-tools-on-server2016-after
 https://github.com/getvpro/Build-Packer
 
 #>
-
-$LogTimeStamp = (Get-Date).ToString('MM-dd-yyyy-hhmm-tt')
-$ScriptLog = (Get-ChildItem C:\Admin\Build | Sort-Object -Property LastWriteTime | Where-object {$_.Name -like "WinPackerBuild*"} | Select -first 1).FullName
 
 Function Get-VMToolsInstalled {
     
@@ -104,6 +104,21 @@ Function Show-Status {
     Close-InstallationProgress
 
 }
+
+### End functions
+
+### Create directory structure as required
+
+If (-not(test-path c:\admin -ErrorAction SilentlyContinue)) {
+
+    new-item -ItemType Directory -Path "c:\Admin\Scripts"
+    new-item -ItemType Directory -Path "C:\Admin\Build"
+    new-item -ItemType Directory -Path "C:\Admin\Language Pack"
+
+}
+
+$LogTimeStamp = (Get-Date).ToString('MM-dd-yyyy-hhmm-tt')
+$ScriptLog = "c:\Admin\Build\WinPackerBuild-VMwareTools-$LogTimeStamp.txt"
 
 ### 1 - Set the current working directory to whichever drive corresponds to the mounted VMWare Tools installation ISO
 

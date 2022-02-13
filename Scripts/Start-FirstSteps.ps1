@@ -98,6 +98,9 @@ Jan 11, 2022
 Feb 11, 2022
 -Added Fr-CA support for Windows 11 21H1
 
+Feb 13, 2022
+-c:\Admin only created as required
+
 .EXAMPLE
 ./Start-FirstSteps.ps1
 
@@ -129,9 +132,13 @@ $PackerRegKey = (Get-ItemProperty -Path "hklm:\SYSTEM\CurrentControlSet\Control\
 $FrenchCaLangPack = (Get-ItemProperty -Path "hklm:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" -Name FrenchCaLangPack -ErrorAction SilentlyContinue).FrenchCaLangPack
 $PackerStaticIP = (Get-ItemProperty -Path "hklm:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" -Name PackerStaticIP -ErrorAction SilentlyContinue).PackerStaticIP
 
-new-item -ItemType Directory -Path "c:\Admin\Scripts"
-new-item -ItemType Directory -Path "C:\Admin\Build"
-new-item -ItemType Directory -Path "C:\Admin\Language Pack"
+If (-not(test-path c:\admin)) {
+
+    new-item -ItemType Directory -Path "c:\Admin\Scripts"
+    new-item -ItemType Directory -Path "C:\Admin\Build"
+    new-item -ItemType Directory -Path "C:\Admin\Language Pack"
+
+}
 
 # Set log path based on being launched by packer, or not
 
