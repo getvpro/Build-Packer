@@ -29,6 +29,9 @@ Jan 7, 2022
 -Updated Do/Loop to use PSWindowSUpdate module
 -Using wscript for some pop up messages 
 
+Feb 13, 2022
+-Get-WUList is now filtered for sofware only, no longer checking for optional driver updates such as VMware
+
 .DESCRIPTION
 Author oreynolds@gmail.com
 
@@ -126,7 +129,8 @@ Write-CustomLog -ScriptLog $ScriptLog -Message "Importing PS Windows update modu
 
 Import-Module -Name PSWindowsUpdate
 
-$Updates = Get-WUList
+#$Updates = Get-WUList | Where-Object {$_.Title -notLike "VMware*"}
+$Updates = Get-WUList -UpdateType Software
 
 If ($Updates -eq $Nul) {
 
