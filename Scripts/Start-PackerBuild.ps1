@@ -62,22 +62,34 @@ do {
 }
 until ($input -ne $null)
 
-EXIT
-
-$VM = Read-host -Prompt "Enter the exact name of the VM specified in the JSON config"
+$VM = Read-host -Prompt "Enter the exact name of the VM specified in the Packer config"
 
 $VC = Read-host -Prompt "Enter in the FQDN of your vCenter server, ommiting the 'https://' prefix"
 
 $VCenterCred = Get-Credential -Message "Enter in the username / password in UPN format to logon to your vCenter instance"
 
-Set-location "C:\Program Files\Packer"
-packer.exe build $PackerConfigFile
-packer.exe build $PackerConfigFile
-
-write-host "Build complete, $VM will now be powered back on in 5 seconds"
-
-start-sleep -s 5
-
 Connect-VIServer -Server $VC -Credential $VCenterCred
 
-Start-VM -VM $VM
+if (-not(Get-VM -Name $VM -ErrorAction SilentlyContinue)) {
+
+    Set-location "C:\Program Files\Packer"
+
+    packer.exe build $PackerConfigFile
+
+    write-host "Build complete, $VM will now be powered back on in 5 seconds"
+
+    start-sleep -s 5
+
+    Start-VM -VM $VM
+
+}
+
+Else {
+
+    Write-Warning "$VM already exists! Please delete it if it's not being used, or choose another VM name!"
+    write-warning "Press any key to EXIT now"    
+    PAUSE
+    EXIT 
+
+}
+
