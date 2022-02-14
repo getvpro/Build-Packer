@@ -101,6 +101,9 @@ Feb 11, 2022
 Feb 13, 2022
 -c:\Admin only created as required
 
+Feb 14, 2022
+-Edit to deal with stand-alone builds
+
 .EXAMPLE
 ./Start-FirstSteps.ps1
 
@@ -149,8 +152,9 @@ IF ($PackerRegKey -eq 1) {
 }
 
 Else {
-    
-    $ScriptLog = (Get-ChildItem C:\Admin\Build | Sort-Object -Property LastWriteTime | Where-object {$_.Name -like "WinPackerBuild*"} | Select -first 1).FullName
+
+    $ScriptLog = "c:\Admin\Build\WinPackerBuild-$LogTimeStamp.txt"
+    #$ScriptLog = (Get-ChildItem C:\Admin\Build | Sort-Object -Property LastWriteTime | Where-object {$_.Name -like "WinPackerBuild*"} | Select -first 1).FullName
 
 }
 
