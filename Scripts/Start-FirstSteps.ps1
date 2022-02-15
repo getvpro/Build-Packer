@@ -397,7 +397,7 @@ If ($FrenchCaLangPack -eq 1) {
 
     IF ($OS -like "*Windows 10*") {
 
-        Add-WindowsPackage -Online -PackagePath "C:\Admin\Language Pack\Win10-21H1-x64-Fr-Ca.cab" -LogPath "C:\admin\Build\Fr-ca-Install.log" -NoRestart
+        Add-WindowsPackage -Online -PackagePath "C:\Admin\Language Pack\Win11-21H1-x64-Fr-Ca.cab" -LogPath "C:\admin\Build\Fr-ca-Install.log" -NoRestart
         
         Write-CustomLog -ScriptLog $ScriptLog -Message "Adding Fr-Ca to preferred display languages" -Level INFO
 
