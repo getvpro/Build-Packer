@@ -32,6 +32,9 @@ Jan 7, 2022
 Feb 13, 2022
 -Get-WUList is now filtered for sofware only, no longer checking for optional driver updates such as VMware
 
+March 19, 2022
+Line 174 updated to actually start windows update
+
 .DESCRIPTION
 Author oreynolds@gmail.com
 
@@ -171,7 +174,8 @@ Else {
 
     write-host "Launch windows update UI"
 
-    c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -WindowStyle minimized -Executionpolicy bypass -Command "control update"
+    #c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -WindowStyle minimized -Executionpolicy bypass -Command "control update"
+    c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -WindowStyle minimized -Executionpolicy bypass -Command "explorer ms-settings:windowsupdate-action"
 
     Do {
 
