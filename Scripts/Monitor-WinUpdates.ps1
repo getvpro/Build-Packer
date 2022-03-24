@@ -32,8 +32,11 @@ Jan 7, 2022
 Feb 13, 2022
 -Get-WUList is now filtered for sofware only, no longer checking for optional driver updates such as VMware
 
-March 19, 2022
+-March 19, 2022
 Line 174 updated to actually start windows update
+
+March 24, 2022
+-Stop-Process -name SystemSettings added where windows updates stop processing
 
 .DESCRIPTION
 Author oreynolds@gmail.com
@@ -150,6 +153,8 @@ If ($Updates -eq $Nul) {
     Write-CustomLog -ScriptLog $ScriptLog -Message "Build completed $TotalBuildTime" -Level INFO       
 
     Get-ScheduledTask -TaskName "*WinUpdates*" | Disable-ScheduledTask
+    
+    Stop-Process -name SystemSettings
 
     $BuildCompleteText = "
     The Windows updates phase has now completed `n
@@ -162,7 +167,6 @@ If ($Updates -eq $Nul) {
     Add-Type -AssemblyName System.Windows.Forms;
     [System.Windows.Forms.MessageBox]::Show('$BuildCompleteText', 'Base Windows Build Complete', 0,0)
     "
-
     Write-CustomLog -ScriptLog $ScriptLog -Message "Windows updates completed, build is ready for the next phase" -Level INFO
     
     EXIT
