@@ -32,11 +32,13 @@ Jan 7, 2022
 Feb 13, 2022
 -Get-WUList is now filtered for sofware only, no longer checking for optional driver updates such as VMware
 
--March 19, 2022
-Line 174 updated to actually start windows update
+March 19, 2022
+-Line 174 updated to actually start windows update
 
-March 24, 2022
--Stop-Process -name SystemSettings added where windows updates stop processing
+March 27, 2022
+-Additional work to improve detection for windows update completion
+-If ((Get-WUList | Where-Object {$_.Title -NotLike "*defender*"} | Measure).Count -eq 0) {
+If ((Get-WUList -UpdateType Software | Where-Object {$_.Title -NotLike "*defender*"} | Measure).Count -eq 0) {
 
 .DESCRIPTION
 Author oreynolds@gmail.com
@@ -54,6 +56,12 @@ N/A
 ## Variables
 
 $LogTimeStamp = (Get-Date).ToString('MM-dd-yyyy-hhmm-tt')
+
+if (-not(test-path "C:\admin\Build" -ErrorAction SilentlyContinue)) {
+
+    new-item -Path "C:\admin\Build" -ItemType Directory
+}
+
 $ScriptLog = "C:\admin\Build\WindowsUpdates.txt"
 
 ### Functions
@@ -153,8 +161,6 @@ If ($Updates -eq $Nul) {
     Write-CustomLog -ScriptLog $ScriptLog -Message "Build completed $TotalBuildTime" -Level INFO       
 
     Get-ScheduledTask -TaskName "*WinUpdates*" | Disable-ScheduledTask
-    
-    Stop-Process -name SystemSettings
 
     $BuildCompleteText = "
     The Windows updates phase has now completed `n
@@ -167,6 +173,7 @@ If ($Updates -eq $Nul) {
     Add-Type -AssemblyName System.Windows.Forms;
     [System.Windows.Forms.MessageBox]::Show('$BuildCompleteText', 'Base Windows Build Complete', 0,0)
     "
+
     Write-CustomLog -ScriptLog $ScriptLog -Message "Windows updates completed, build is ready for the next phase" -Level INFO
     
     EXIT
@@ -188,24 +195,39 @@ Else {
         Write-CustomLog -ScriptLog $ScriptLog -Message "Check for windows update status, sleep for 10 seconds" -Level INFO
 
         $aa = Test-PendingReboot
-        
-        If ((Get-WUList | Measure).Count -eq 0) {
+
+        If ((Get-WUList -UpdateType Software | Where-Object {$_.Title -NotLike "*defender*"} | Measure).Count -eq 0) {
          
-            $BB = $True
+            $bb = $True
         }
 
         Else {
 
-            $BB = $false
+            $bb = $false
+
+        }        
+        
+        <#
+        if ((Get-Service -name TrustedInstaller).StartType -eq "Manual") {
+
+            $bb = $True
 
         }
+
+        Else {
+        
+            $bb = $false
+
+        }
+
+        #>       
 
         write-host "Pending reboot is now $aa"
         write-host "Windows updates remaining to process is now $bb"
         Start-Sleep -s 10
     }    
     
-    Until ($aa -eq "True" -or $bb -eq $True)
+    Until ($aa -eq "True" -and $bb -eq $True)
 
     ### End of the line
 
@@ -216,7 +238,7 @@ Else {
     "
     Write-CustomLog -ScriptLog $ScriptLog -Message "End of logging before graceful reboot" -Level INFO
     
-    Restart-Computer -Force
+#    Restart-Computer -Force
 
 }
 
