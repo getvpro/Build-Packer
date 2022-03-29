@@ -38,10 +38,11 @@ March 19, 2022
 March 27, 2022
 -Additional work to improve detection for windows update completion
 -If ((Get-WUList | Where-Object {$_.Title -NotLike "*defender*"} | Measure).Count -eq 0) {
-If ((Get-WUList -UpdateType Software | Where-Object {$_.Title -NotLike "*defender*"} | Measure).Count -eq 0) {
+If ((Get-WUList -UpdateType Software | Where-Object {$_.Title -NotLike "*defender*"} | Measure).Count -eq 0)
 
 March 28, 2022
--Restart-computer code @ end un-commented to activate
+-Line 148 updated to filter out defender updates
+-Restart-computer @ end added back
 
 .DESCRIPTION
 Author oreynolds@gmail.com
@@ -147,7 +148,8 @@ Write-CustomLog -ScriptLog $ScriptLog -Message "Importing PS Windows update modu
 Import-Module -Name PSWindowsUpdate
 
 #$Updates = Get-WUList | Where-Object {$_.Title -notLike "VMware*"}
-$Updates = Get-WUList -UpdateType Software
+#$Updates = Get-WUList -UpdateType Software 
+$Updates = Get-WUList -UpdateType Software | Where-Object {$_.Title -NotLike "*defender*"}
 
 If ($Updates -eq $Nul) {
 
