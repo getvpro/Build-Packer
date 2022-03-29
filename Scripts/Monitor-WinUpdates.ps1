@@ -40,6 +40,9 @@ March 27, 2022
 -If ((Get-WUList | Where-Object {$_.Title -NotLike "*defender*"} | Measure).Count -eq 0) {
 If ((Get-WUList -UpdateType Software | Where-Object {$_.Title -NotLike "*defender*"} | Measure).Count -eq 0) {
 
+March 28, 2022
+-Restart-computer code @ end un-commented to activate
+
 .DESCRIPTION
 Author oreynolds@gmail.com
 
@@ -238,7 +241,7 @@ Else {
     "
     Write-CustomLog -ScriptLog $ScriptLog -Message "End of logging before graceful reboot" -Level INFO
     
-#    Restart-Computer -Force
+    Restart-Computer -Force
 
 }
 
