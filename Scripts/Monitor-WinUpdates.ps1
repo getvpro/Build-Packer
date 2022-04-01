@@ -189,8 +189,7 @@ Else {
     Write-CustomLog -ScriptLog $ScriptLog -Message "The following windows updates will be installed: `n $($Updates | Out-String)" -Level INFO
 
     write-host "Launch windows update UI"
-
-    #c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -WindowStyle minimized -Executionpolicy bypass -Command "control update"
+    
     c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -WindowStyle minimized -Executionpolicy bypass -Command "explorer ms-settings:windowsupdate-action"
 
     Do {
@@ -237,6 +236,8 @@ Else {
     ### End of the line
 
     Write-CustomLog -ScriptLog $ScriptLog -Message "Windows updates have finished processing, machine will be rebooted in 60 seconds" -Level INFO
+
+    stop-process -Name Systemsettings -Force
 
     c:\Windows\system32\ServiceUI.exe -process:explorer.exe "c:\Windows\System32\WindowsPowershell\v1.0\powershell.exe" -WindowStyle minimized -Executionpolicy bypass `
     -Command "(New-Object -comObject Wscript.Shell).Popup('Windows updates have finished processing click OK to reboot or now, or wait 60 seconds',60,'INFO',0+64)    
