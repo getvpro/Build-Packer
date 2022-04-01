@@ -165,6 +165,8 @@ If ($Updates -eq $Nul) {
     $TotalMinutes = $TotalBuildTime | Select-Object -ExpandProperty Minutes
     $TotalSeconds = $TotalBuildTime | Select-Object -ExpandProperty Seconds
     
+	stop-process -Name Systemsettings -Force
+    
     Write-CustomLog -ScriptLog $ScriptLog -Message "No windows updates to apply, start/monitor windows update tasks will be disabled and the script will exit" -Level INFO
     Write-CustomLog -ScriptLog $ScriptLog -Message "Build completed $TotalBuildTime" -Level INFO       
 
