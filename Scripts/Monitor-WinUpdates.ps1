@@ -44,6 +44,9 @@ March 28, 2022
 -Line 148 updated to filter out defender updates
 -Restart-computer @ end added back
 
+April 1, 2022
+-Stop-process -Name Systemsettings -Force added to two places to close out windows update settings window so that Powershell pop-up windows show first
+
 .DESCRIPTION
 Author oreynolds@gmail.com
 
